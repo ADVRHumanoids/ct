@@ -48,8 +48,8 @@ namespace core {
  * \tparam T type of each point of the trajectory
  * \tparam Alloc allocator for trajectory points
  */
-template <class T, class Alloc = Eigen::aligned_allocator<T>>
-class DiscreteTrajectoryBase : public TrajectoryBase<T>
+template <class T, class Alloc = Eigen::aligned_allocator<T>, typename SCALAR = double>
+class DiscreteTrajectoryBase : public TrajectoryBase<T, SCALAR>
 {
 
 public:
@@ -71,12 +71,11 @@ public:
 	 * @param data data points
 	 * @param type interpolation strategy
 	 */
-	DiscreteTrajectoryBase(const TimeArray& time, const DiscreteArray<T, Alloc>& data, const InterpolationType& type = ZOH):
+	DiscreteTrajectoryBase(const tpl::TimeArray<SCALAR>& time, const DiscreteArray<T, Alloc>& data, const InterpolationType& type = ZOH):
 		time_(time),
 		data_(data),
 		interp_(type)
 	{
-		initialize();
 	}
 
 	//! constructor for uniformly spaced trajectories
@@ -92,8 +91,7 @@ public:
 			data_(data),
 			interp_(type)
 	{
-		time_ = TimeArray(deltaT, data.size()+1, t0);
-		initialize();
+		time_ = tpl::TimeArray<SCALAR>(deltaT, data.size(), t0);
 	}
 
 	//! copy constructor
@@ -102,7 +100,6 @@ public:
 		data_(other.data_),
 		interp_(other.interp_.getInterpolationType())
 	{
-		initialize();
 	}
 
 	//! extraction constructor
@@ -112,37 +109,27 @@ public:
 	 * @param startIndex index where the trajectory to be extracted starts
 	 * @param endIndex index where the trajectory to be extracted ends
 	 */
-	DiscreteTrajectoryBase(DiscreteTrajectoryBase<T, Alloc>& other, const size_t startIndex, const size_t endIndex):
+	DiscreteTrajectoryBase(DiscreteTrajectoryBase<T, Alloc, SCALAR>& other, const size_t startIndex, const size_t endIndex):
 		time_(),
 		data_(),
 		interp_(other.interp_.getInterpolationType())
 	{
-		TimeArray time_temp;
+		tpl::TimeArray<SCALAR> time_temp;
 		DiscreteArray<T, Alloc> data_temp;
 
-		for(size_t i = startIndex; i<=endIndex; i++){
+		for(size_t i = startIndex; i<=endIndex; i++)
+		{
 			time_temp.push_back(other.time_[i]);
 			data_temp.push_back(other.data_[i]);
 		}
 
 		time_ = time_temp;
 		data_ = data_temp;
-
-		initialize();
 	}
 
-	//! destructor
+	//! Destructor
 	virtual ~DiscreteTrajectoryBase() {};
 
-	//! initialize the interpolation
-	/*!
-	 * \todo the interpolation should not keep references. Then this function can be removed.
-	 */
-	void initialize() {
-		interp_.reset();
-		interp_.setTimeStamp(&time_);
-		interp_.setData(&data_);
-	}
 
 	//! set the data array
 	/*!
@@ -150,7 +137,6 @@ public:
 	 */
 	void setData(const DiscreteArray<T, Alloc>& data) {
 		data_ = data;
-		initialize();
 	}
 
 	//! set the interpolation strategy
@@ -165,9 +151,8 @@ public:
 	/*!
 	 * @param time new time stamps
 	 */
-	void setTime(const TimeArray& time) {
+	void setTime(const tpl::TimeArray<SCALAR>& time) {
 		time_ = time;
-		initialize();
 	}
 
 	//! shift the trajectory forward in time
@@ -178,7 +163,6 @@ public:
 	 */
 	void shiftTime(const Time& dt) {
 		time_.addOffset(-dt);
-		initialize();
 	}
 
 	//! evaluate the trajectory at a certain time
@@ -188,9 +172,10 @@ public:
 	 * @param time stamp at which to evaluate the trajectory
 	 * @return trajectory value
 	 */
-	virtual T eval(const Time& time) override {
+	virtual T eval(const SCALAR& evalTime) override
+	{
 		T result;
-		interp_.interpolate(time, result);
+		interp_.interpolate(time_, data_, evalTime, result);
 		return result;
 	}
 
@@ -251,14 +236,12 @@ public:
 			time_.push_back(time+time_.back());
 
 		data_.push_back(data);
-		initialize();
 	}
 
 	//! Remove the last data and time pair
 	void pop_back(){
 		time_.pop_back();
 		data_.pop_back();
-		initialize();
 	}
 
 	//! Erase front elements and optionally shift the trajectory in time
@@ -276,7 +259,6 @@ public:
 	void clear() {
 		data_.clear();
 		time_.clear();
-		interp_.reset();
 	}
 
 	//! Swap two trajectories
@@ -288,8 +270,6 @@ public:
 	void swapData(DiscreteTrajectoryBase& other){
 		time_.swap(other.time_);
 		data_.swap(other.data_);
-		initialize();
-		other.initialize();
 	}
 
 	//! assignment operator
@@ -301,21 +281,20 @@ public:
 	    time_ = other.time_;
 	    data_ = other.data_;
 	    interp_.changeInterpolationType (other.interp_.getInterpolationType());
-	    initialize();
 
 	    return *this;
 	}
 
 	//! get the time stamp at a certain index
-	const Time& getTimeFromIndex(const size_t& ind) const {return time_[ind];}
+	const SCALAR& getTimeFromIndex(const size_t& ind) const {return time_[ind];}
 
 	//! get the index associated with a certain time
 	/*!
-	 * If the exact time is not stored, the interpolater will find the corresponding index.
+	 * If the exact time is not stored, the interpolation will find the corresponding index.
 	 * @param t time to search for
 	 * @return according index
 	 */
-	size_t getIndexFromTime(const core::Time& t) {return interp_.findIndex(t);}
+	size_t getIndexFromTime(const SCALAR& t) {return interp_.findIndex(time_, t);}
 
 	//! get the data array
 	DiscreteArray<T, Alloc>& getDataArray() {return data_;}
@@ -324,18 +303,18 @@ public:
 	const DiscreteArray<T, Alloc>& getDataArray() const {return data_;}
 
 	//! get the time array
-	TimeArray& getTimeArray() {return time_;}
+	tpl::TimeArray<SCALAR>& getTimeArray() {return time_;}
 
 	//! get the time array
-	const TimeArray& getTimeArray() const {return time_;}
+	const tpl::TimeArray<SCALAR>& getTimeArray() const {return time_;}
 
 protected:
 
-	TimeArray time_; //!< time array
+	tpl::TimeArray<SCALAR> time_; //!< time array
 
 	DiscreteArray<T, Alloc> data_; //!< data array
 
-	Interpolation<T, Alloc> interp_; //!< interpolation strategy
+	Interpolation<T, Alloc, SCALAR> interp_; //!< interpolation strategy
 
 };
 

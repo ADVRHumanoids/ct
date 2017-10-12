@@ -40,7 +40,7 @@ namespace tpl {
 /*!
  * \todo This is just a duplicate of a scalar array. Remove.
  */
-template <typename SCALAR = double>
+template <typename SCALAR>
 class TimeArray : public ScalarArray<SCALAR>
 {
 public:
@@ -54,7 +54,7 @@ public:
 	 * \param N		the number of points, minimum 2
 	 * \param t0	the starting time, defaults to zero
 	 */
-	TimeArray(const Time& dt, const size_t& N, const Time& t0 = 0.0):
+	TimeArray(const SCALAR& dt, const size_t& N, const SCALAR& t0 = 0.0):
 		ScalarArray<SCALAR>(linspace<ScalarArray<SCALAR>>(t0, t0+(N-1)*dt, N))
 		{}
 

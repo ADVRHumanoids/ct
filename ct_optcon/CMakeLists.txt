@@ -69,8 +69,6 @@ if(DEFINED ENV{IPOPT_SOURCE_DIR} OR ipopt_FOUND)
     set(IPOPT_LIBS ipopt dl coinmumps coinhsl lapack blas gfortran
         m quadmath coinmetis)
         
-    add_library(ct_ipopt_interface src/nlp/solver/IpoptSolver.cpp)
-    target_link_libraries(ct_ipopt_interface ${catkin_LIBRARIES} ${IPOPT_LIBS})
     set(CT_IPOPT_LIBS ct_ipopt_interface)
 
 endif(DEFINED ENV{IPOPT_SOURCE_DIR} OR ipopt_FOUND)
@@ -87,8 +85,6 @@ if(DEFINED ENV{SNOPT_SOURCE_DIR})
     find_library(SNOPT_LIBRARY2 snopt7       $ENV{SNOPT_SOURCE_DIR}/lib REQUIRED)
     set(SNOPT_LIBS ${SNOPT_LIBRARY1} ${SNOPT_LIBRARY2})
 
-    add_library(ct_snopt_interface src/nlp/solver/SnoptSolver.cpp)
-    target_link_libraries(ct_snopt_interface ${catkin_LIBRARIES} ${SNOPT_LIBS})
     set(CT_SNOPT_LIBS ct_snopt_interface)
 endif(DEFINED ENV{SNOPT_SOURCE_DIR})
 
@@ -131,6 +127,18 @@ catkin_package(
         ct_core
 )
 
+if(BUILD_WITH_SNOPT_SUPPORT)
+    add_library(ct_snopt_interface src/nlp/solver/SnoptSolver.cpp)
+    target_link_libraries(ct_snopt_interface ${catkin_LIBRARIES} ${SNOPT_LIBS})
+endif()
+
+if(BUILD_WITH_IPOPT_SUPPORT)
+    message(WARNING "Calling add library")
+    add_library(ct_ipopt_interface src/nlp/solver/IpoptSolver.cpp)
+    message(WARNING "After call")
+    target_link_libraries(ct_ipopt_interface ${catkin_LIBRARIES} ${IPOPT_LIBS})
+endif()
+
 
 
 if(BUILD_EXAMPLES)
@@ -145,8 +153,8 @@ if(BUILD_EXAMPLES)
     add_executable(ex_MPC examples/iLQG_MPC.cpp)
     target_link_libraries(ex_MPC ${catkin_LIBRARIES})
     
-    add_executable(ex_DMS examples/DMS.cpp)
-    target_link_libraries(ex_DMS ${catkin_LIBRARIES} ${NLP_LIBS})
+    #add_executable(ex_DMS examples/DMS.cpp)
+    #target_link_libraries(ex_DMS ${catkin_LIBRARIES} ${NLP_LIBS})
 endif()
 
 

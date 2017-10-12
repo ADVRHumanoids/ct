@@ -57,7 +57,7 @@ namespace optcon{
  * 	\warning Using numerical differentiation is inefficient and typically slow.
  *
 */
-template<size_t STATE_DIM, size_t CONTROL_DIM>
+template<size_t STATE_DIM, size_t CONTROL_DIM, typename SCALAR = double>
 class OptConProblem {
 
 public:
@@ -69,9 +69,10 @@ public:
 
 
 	// typedefs
-	typedef std::shared_ptr<core::ControlledSystem<STATE_DIM, CONTROL_DIM>> DynamicsPtr_t;
-	typedef std::shared_ptr<core::LinearSystem<STATE_DIM, CONTROL_DIM>> LinearPtr_t;
-	typedef std::shared_ptr<optcon::CostFunctionQuadratic<STATE_DIM, CONTROL_DIM>> CostFunctionPtr_t;
+	typedef ct::core::StateVector<STATE_DIM, SCALAR> state_vector_t;
+	typedef std::shared_ptr<core::ControlledSystem<STATE_DIM, CONTROL_DIM, SCALAR>> DynamicsPtr_t;
+	typedef std::shared_ptr<core::LinearSystem<STATE_DIM, CONTROL_DIM, SCALAR>> LinearPtr_t;
+	typedef std::shared_ptr<optcon::CostFunctionQuadratic<STATE_DIM, CONTROL_DIM, SCALAR>> CostFunctionPtr_t;
 	typedef std::shared_ptr<optcon::LinearConstraintContainer<STATE_DIM, CONTROL_DIM>> ConstraintPtr_t;
 
 	OptConProblem(){}
@@ -93,17 +94,17 @@ public:
 			LinearPtr_t linearSystem = nullptr
 	) :
 		tf_(0.0),
-		x0_(ct::core::StateVector<STATE_DIM>::Zero()),
+		x0_(state_vector_t::Zero()),
 		controlledSystem_(nonlinDynamics),
 		costFunction_(costFunction),
 		linearizedSystem_(linearSystem),
-		g_(nullptr),
-		g_t_(nullptr)
+		stateInputConstraints_(nullptr),
+		pureStateConstraints_(nullptr)
 	{
 		if(linearSystem == nullptr)	// no linearization provided
 		{
-			linearizedSystem_ = std::shared_ptr<core::SystemLinearizer<STATE_DIM, CONTROL_DIM>> (
-					new core::SystemLinearizer<STATE_DIM, CONTROL_DIM> (controlledSystem_));
+			linearizedSystem_ = std::shared_ptr<core::SystemLinearizer<STATE_DIM, CONTROL_DIM, SCALAR>> (
+					new core::SystemLinearizer<STATE_DIM, CONTROL_DIM, SCALAR> (controlledSystem_));
 		}
 	}
 
@@ -117,8 +118,8 @@ public:
 	 * @param linearSystem (optional) Linearized System Dynamics.
 	 */
 	OptConProblem(
-			const core::Time& tf,
-			core::StateVector<STATE_DIM> x0,
+			const SCALAR& tf,
+			const state_vector_t& x0,
 			DynamicsPtr_t nonlinDynamics,
 			CostFunctionPtr_t costFunction,
 			LinearPtr_t linearSystem = nullptr):
@@ -178,57 +179,85 @@ public:
 	 * set intermediate constraints
 	 * @param constraint pointer to intermediate constraint
 	 */
-	void setIntermediateConstraints(const ConstraintPtr_t constraint) { g_ = constraint;}
+	void setStateInputConstraints(const ConstraintPtr_t constraint)
+	{ 
+		stateInputConstraints_ = constraint;
+		if(!stateInputConstraints_->isInitialized())
+			stateInputConstraints_->initialize();
+		if((stateInputConstraints_->getJacobianInputNonZeroCountIntermediate() + 
+			stateInputConstraints_->getJacobianInputNonZeroCountTerminal()) == 0)
+			std::cout << "WARNING: The state input constraint container does not" <<
+			" contain any elements in the constraint jacobian with respect to the input." <<
+			" Consider adding the constraints as pure state constraints. " << std::endl;
+	}
 
 	/*!
 	 * set final constraints
 	 * @param constraint pointer to a final constraint
 	 */
-	void setFinalConstraints(const ConstraintPtr_t constraint) { g_t_ = constraint;}
+	void setPureStateConstraints(const ConstraintPtr_t constraint)
+	{ 
+		pureStateConstraints_ = constraint;
+		if(!pureStateConstraints_->isInitialized())
+			pureStateConstraints_->initialize();
+		if((pureStateConstraints_->getJacobianInputNonZeroCountIntermediate() + 
+			pureStateConstraints_->getJacobianInputNonZeroCountTerminal()) > 0)
+			throw std::runtime_error("Pure state constraints contain an element with a non zero derivative with respect to control input."
+				" Implement this constraint as state input constraint");
+	}
 
 
-	//! retrieve intermediate constraints
-	const ConstraintPtr_t getIntermediateConstraints() const { return g_; }
 
-	//! retrieve final constraints
-	const ConstraintPtr_t getFinalConstraints() const { return g_t_; }
+	/**
+	 * @brief      Retrieve the state input constraints
+	 *
+	 * @return     The state input constraints.
+	 */
+	const ConstraintPtr_t getStateInputConstraints() const { return stateInputConstraints_; }
+
+	/**
+	 * @brief      Retrieves the pure state constraints
+	 *
+	 * @return     The pure state constraints
+	 */
+	const ConstraintPtr_t getPureStateConstraints() const { return pureStateConstraints_; }
 
 	/*!
 	 * get initial state (called by solvers)
 	 * */
-	const core::StateVector<STATE_DIM> getInitialState() const {return x0_;}
+	const state_vector_t getInitialState() const {return x0_;}
 
 	/*!
 	 * set initial state for first subsystem
 	 * */
-	void setInitialState(const core::StateVector<STATE_DIM> x0) {x0_ = x0;}
+	void setInitialState(const state_vector_t& x0) {x0_ = x0;}
 
 
 	/*!
 	 * get the current time horizon
 	 * @return	Time Horizon
 	 */
-	const ct::core::Time& getTimeHorizon() const {return tf_ ;}
+	const SCALAR& getTimeHorizon() const {return tf_ ;}
 
 	/*!
 	 * Update the current time horizon in the Opt.Control Problem (required for example for replanning)
 	 * @param tf new time horizon
 	 */
-	void setTimeHorizon(const core::Time tf){tf_ = tf;}
+	void setTimeHorizon(const SCALAR& tf){tf_ = tf;}
 
 
 
 private:
-	ct::core::Time tf_;						//! end time
+	SCALAR tf_;						//! end time
 
-	ct::core::StateVector<STATE_DIM> x0_;	//! initial state
+	state_vector_t x0_;	//! initial state
 
 	DynamicsPtr_t controlledSystem_;	//! the nonlinear system
 	CostFunctionPtr_t costFunction_;	//! a quadratic cost function
 	LinearPtr_t linearizedSystem_;		//! the linear approximation of the nonlinear system
 
-	ConstraintPtr_t g_;		//! container of all the intermediate constraints of the problem
-	ConstraintPtr_t g_t_;	//! container of all the terminal constraints of the problem
+	ConstraintPtr_t stateInputConstraints_;		//! container of all the intermediate constraints of the problem
+	ConstraintPtr_t pureStateConstraints_;	//! container of all the terminal constraints of the problem
 
 };
 
