@@ -1,0 +1,8 @@
+
+Complete list of authors who contributed code to the Control Toolbox:
+
+Michael Neunert
+Markus Giftthaler
+Markus Stäuble
+Diego Pardo
+Farbod Farshidian
