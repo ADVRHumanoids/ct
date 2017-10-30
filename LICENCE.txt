@@ -1,7 +1,7 @@
 BSD 2-Clause License
 
-Copyright (c) 2014-2017, ETH Zürich. 
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, 
+Copyright (c) 2014-2017, ETH Zurich, Google Inc.
+Authors:  Michael Neunert, Markus Giftthaler, Markus Stï¿½uble, 
 Diego Pardo, Farbod Farshidian.
 All rights reserved.
 

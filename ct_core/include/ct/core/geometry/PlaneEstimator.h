@@ -1,6 +1,7 @@
 /***********************************************************************************
-Copyright (c) 2017, Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo,
-Farbod Farshidian. All rights reserved.
+Copyright (c) 2017, ETH Zurich, Google Inc. All rights reserved.
+Authors: Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo,
+Farbod Farshidian. 
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
