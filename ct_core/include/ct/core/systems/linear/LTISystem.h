@@ -53,6 +53,9 @@ class LTISystem : public LinearSystem<STATE_DIM, CONTROL_DIM>
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+  typedef typename Eigen::Matrix<double, STATE_DIM, STATE_DIM> state_matrix_t; //!< state Jacobian type
+  typedef typename Eigen::Matrix<double, STATE_DIM, CONTROL_DIM> state_control_matrix_t; //!< input Jacobian type
+
 	//! Constructs a linear time invariant system
 	/*!
 	 * @param A A matrix
@@ -62,8 +65,8 @@ public:
 	 * @return instance of the LTI system
 	 */
 	LTISystem(
-		const Eigen::Matrix<double, STATE_DIM, STATE_DIM>& A,
-		const Eigen::Matrix<double, STATE_DIM, CONTROL_DIM>& B,
+		const state_matrix_t& A,
+		const state_control_matrix_t& B,
 		const Eigen::Matrix<double, STATE_DIM, STATE_DIM>& C = Eigen::Matrix<double, STATE_DIM, STATE_DIM>::Identity(),
 		const Eigen::Matrix<double, STATE_DIM, CONTROL_DIM> D = Eigen::Matrix<double, STATE_DIM, CONTROL_DIM>::Zero()
 	) :
@@ -87,44 +90,33 @@ public:
 	}
 
 	//! get A matrix
-	inline StateVector<STATE_DIM> getDerivativeState(){
+	const state_matrix_t& getDerivativeState(
+	    const StateVector<STATE_DIM>& x = StateVector<STATE_DIM>::Zero(),
+	    const ControlVector<CONTROL_DIM>& u = ControlVector<CONTROL_DIM>::Zero(),
+	    const double t = 0.0) override {
 		return A_;
 	}
 
 	//! get B matrix
-	inline ControlVector<CONTROL_DIM> getDerivativeControl(){
+	const state_control_matrix_t& getDerivativeControl(
+      const StateVector<STATE_DIM>& x = StateVector<STATE_DIM>::Zero(),
+      const ControlVector<CONTROL_DIM>& u = ControlVector<CONTROL_DIM>::Zero(),
+      const double t = 0.0
+    ) override {
 		return B_;
 	}
 
 	//! get A matrix
-	Eigen::Matrix<double, STATE_DIM, STATE_DIM>& A() { return A_; }
+	state_matrix_t& A() { return A_; }
 
 	//! get B matrix
-	Eigen::Matrix<double, STATE_DIM, CONTROL_DIM>& B() { return B_; }
+	state_control_matrix_t& B() { return B_; }
 
 	//! get C matrix
 	Eigen::Matrix<double, STATE_DIM, STATE_DIM>& C() { return C_; }
 
 	//! get D matrix
 	Eigen::Matrix<double, STATE_DIM, CONTROL_DIM>& D() { return D_; }
-
-	//! computes the system dynamics
-	/*!
-	 * Computes \f$ \dot{x} = Ax + Bu \f$
-	 * @param state current state x
-	 * @param t time (gets ignored)
-	 * @param control control input
-	 * @param derivative state derivative
-	 */
-	void computeControlledDynamics(
-		const Eigen::Matrix<double, STATE_DIM, 1>& state,
-		const Time& t,
-		const Eigen::Matrix<double, CONTROL_DIM, 1>& control,
-		Eigen::Matrix<double, STATE_DIM, 1>& derivative
-	)
-	{
-		derivative = A_ * state + B_ * control;
-	}
 
 	//! computes the system output (measurement)
 	/*!
@@ -212,8 +204,8 @@ public:
 
 private:
 
-	Eigen::Matrix<double, STATE_DIM, STATE_DIM> A_; //!< A matrix
-	Eigen::Matrix<double, STATE_DIM, CONTROL_DIM> B_; //!< B matrix
+	state_matrix_t A_; //!< A matrix
+	state_control_matrix_t B_; //!< B matrix
 
 	Eigen::Matrix<double, STATE_DIM, STATE_DIM> C_; //!< C matrix
 	Eigen::Matrix<double, STATE_DIM, CONTROL_DIM> D_; //!< D matrix
