@@ -1,6 +1,7 @@
 /***********************************************************************************
-Copyright (c) 2017, Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo,
-Farbod Farshidian. All rights reserved.
+Copyright (c) 2017, ETH Zurich, Google Inc. All rights reserved.
+Authors: Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo,
+Farbod Farshidian. 
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -92,6 +93,34 @@ public:
 		K = (R_inverse*(B.transpose()*P));
 
 		return success;
+	}
+
+  //! design the infinite-horizon LQR controller.
+  /*!
+   * @param system the linear system to compute the controller for
+   * @param x the state around which to linearize the system (if state dependent)
+   * @param u the control around which to linearize the system (if state dependent)
+   * @param Q state-weighting matrix
+   * @param R control input weighting matrix
+   * @param K control feedback matrix K (to be designed)
+   * @param RisDiagonal set to true if R is a diagonal matrix (efficiency boost)
+   * @param solveRiccatiIteratively
+   *  use closed-form solution of the infinite-horizon Riccati Equation
+   * @return success
+   */
+	bool compute(core::LinearSystem<STATE_DIM, CONTROL_DIM>& system,
+	             const core::StateVector<STATE_DIM>& x,
+	             const core::ControlVector<CONTROL_DIM>& u,
+	             const state_matrix_t& Q,
+               const control_matrix_t& R,
+               control_feedback_t& K,
+               bool RisDiagonal = false,
+               bool solveRiccatiIteratively = false)
+	{
+	  return compute(Q, R,
+	                 system.getDerivativeState(x, u),
+	                 system.getDerivativeControl(x, u),
+	                 K, RisDiagonal, solveRiccatiIteratively);
 	}
 
 #ifdef USE_MATLAB_CPP_INTERFACE

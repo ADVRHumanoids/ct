@@ -1,6 +1,7 @@
 /***********************************************************************************
-Copyright (c) 2017, Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo,
-Farbod Farshidian. All rights reserved.
+Copyright (c) 2017, ETH Zurich, Google Inc. All rights reserved.
+Authors: Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo,
+Farbod Farshidian. 
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -26,6 +27,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <chrono>
 
+#include <ct/core/core.h>
 #include <ct/optcon/lqr/LQR.hpp>
 
 #ifdef MATLAB
@@ -40,16 +42,72 @@ namespace ct{
 namespace optcon{
 namespace example{
 
+const size_t stateDim = 12;
+const size_t controlDim = 4;
+
+
+
+void setABQR(
+    Eigen::Matrix<double, stateDim, stateDim>& A,
+    Eigen::Matrix<double, stateDim, controlDim>& B,
+    Eigen::Matrix<double, stateDim, stateDim>& Q,
+    Eigen::Matrix<double, controlDim, controlDim>& R
+)
+  {
+  Q <<
+        10,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+         0,   10,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+         0,    0, 2000,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+         0,    0,    0,  0.1,    0,    0,    0,    0,    0,    0,    0,    0,
+         0,    0,    0,    0,  0.1,    0,    0,    0,    0,    0,    0,    0,
+         0,    0,    0,    0,    0,  0.5,    0,    0,    0,    0,    0,    0,
+         0,    0,    0,    0,    0,    0,  0.1,    0,    0,    0,    0,    0,
+         0,    0,    0,    0,    0,    0,    0,  0.1,    0,    0,    0,    0,
+         0,    0,    0,    0,    0,    0,    0,    0,    1,    0,    0,    0,
+         0,    0,    0,    0,    0,    0,    0,    0,    0,  0.2,    0,    0,
+         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,  0.2,    0,
+         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0, 0.02;
+
+    R <<
+       100,    0,    0,    0,
+         0, 1000,    0,    0,
+         0,    0, 1000,    0,
+         0,    0,    0,  100;
+
+
+    A <<
+      0,     0,     0,     0,     0,     0,     1,     0,     0,     0,     0,     0,
+        0,     0,     0,     0,     0,     0,     0,     1,     0,     0,     0,     0,
+        0,     0,     0,     0,     0,     0,     0,     0,     1,     0,     0,     0,
+        0,     0,     0,     0,     0,     0,     0,     0,     0,     1,     0,     0,
+        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     1,     0,
+        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     1,
+        0,     0,     0,     0,  9.81,     0,     0,     0,     0,     0,     0,     0,
+        0,     0,     0, -9.81,     0,     0,     0,     0,     0,     0,     0,     0,
+        0,     0,     0,    -0,    -0,     0,     0,     0,     0,     0,     0,     0,
+        0,     0,     0,     0,     0,    -0,     0,     0,     0,     0,    -0,    -0,
+        0,     0,     0,     0,    -0,    -0,     0,     0,     0,     0,     0,     0,
+        0,     0,     0,     0,     0,     0,     0,     0,     0,    -0,     0,     0;
+
+
+    B <<
+        0,       0,       0,       0,
+          0,       0,       0,       0,
+          0,       0,       0,       0,
+          0,       0,       0,       0,
+          0,       0,       0,       0,
+          0,       0,       0,       0,
+          0,       0,       0,       0,
+         -0,       0,       0,       0,
+    1.39665,       0,       0,       0,
+          0, 142.857,      -0,       0,
+          0,       0, 142.857,       0,
+          0,      -0,       0, 83.3333;
+}
+
 
 TEST(LQRTest, quadTest)
 {
-//	std::cout << "QUADROTOR TEST"<<std::endl;
-//	std::cout << "==================================="<<std::endl;
-//	std::cout << "==================================="<<std::endl << std::endl << std::endl;
-
-	const size_t stateDim = 12;
-	const size_t controlDim = 4;
-
 	Eigen::Matrix<double, stateDim, stateDim> A;
 	Eigen::Matrix<double, stateDim, controlDim> B;
 	Eigen::Matrix<double, stateDim, stateDim> Q;
@@ -57,60 +115,12 @@ TEST(LQRTest, quadTest)
 	Eigen::Matrix<double, controlDim, stateDim> K;
 	Eigen::Matrix<double, controlDim, stateDim> Kiterative;
 
-	ct::optcon::LQR<stateDim, controlDim> lqr;
-
-	Q <<
-		  10,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-		   0,   10,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-		   0,    0, 2000,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-		   0,    0,    0,  0.1,    0,    0,    0,    0,    0,    0,    0,    0,
-		   0,    0,    0,    0,  0.1,    0,    0,    0,    0,    0,    0,    0,
-		   0,    0,    0,    0,    0,  0.5,    0,    0,    0,    0,    0,    0,
-		   0,    0,    0,    0,    0,    0,  0.1,    0,    0,    0,    0,    0,
-		   0,    0,    0,    0,    0,    0,    0,  0.1,    0,    0,    0,    0,
-		   0,    0,    0,    0,    0,    0,    0,    0,    1,    0,    0,    0,
-		   0,    0,    0,    0,    0,    0,    0,    0,    0,  0.2,    0,    0,
-		   0,    0,    0,    0,    0,    0,    0,    0,    0,    0,  0.2,    0,
-		   0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0, 0.02;
-
-	R <<
-		 100,    0,    0,    0,
-		   0, 1000,    0,    0,
-		   0,    0, 1000,    0,
-		   0,    0,    0,  100;
-
-
-	A <<
-		0,     0,     0,     0,     0,     0,     1,     0,     0,     0,     0,     0,
-	    0,     0,     0,     0,     0,     0,     0,     1,     0,     0,     0,     0,
-	    0,     0,     0,     0,     0,     0,     0,     0,     1,     0,     0,     0,
-	    0,     0,     0,     0,     0,     0,     0,     0,     0,     1,     0,     0,
-	    0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     1,     0,
-	    0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     1,
-	    0,     0,     0,     0,  9.81,     0,     0,     0,     0,     0,     0,     0,
-	    0,     0,     0, -9.81,     0,     0,     0,     0,     0,     0,     0,     0,
-	    0,     0,     0,    -0,    -0,     0,     0,     0,     0,     0,     0,     0,
-	    0,     0,     0,     0,     0,    -0,     0,     0,     0,     0,    -0,    -0,
-	    0,     0,     0,     0,    -0,    -0,     0,     0,     0,     0,     0,     0,
-	    0,     0,     0,     0,     0,     0,     0,     0,     0,    -0,     0,     0;
-
-
-	B <<
-		  0,       0,       0,       0,
-	      0,       0,       0,       0,
-	      0,       0,       0,       0,
-	      0,       0,       0,       0,
-	      0,       0,       0,       0,
-	      0,       0,       0,       0,
-	      0,       0,       0,       0,
-	     -0,       0,       0,       0,
-	1.39665,       0,       0,       0,
-	      0, 142.857,      -0,       0,
-	      0,       0, 142.857,       0,
-	      0,      -0,       0, 83.3333;
-
+	setABQR(A, B, Q, R);
 	Kiterative.setZero();
 	K.setZero();
+
+	ct::optcon::LQR<stateDim, controlDim> lqr;
+
 
 
 	bool foundSolutionIterative = lqr.compute(Q, R, A, B, Kiterative, false, true);
@@ -140,6 +150,36 @@ TEST(LQRTest, quadTest)
 	elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 	std::cout << "solved "<<nTests<<" lqr problems iteratively with state dimension "<<stateDim<<" in "<<elapsed.count()<<" ms (average: "<<elapsed.count()/static_cast<double>(nTests)<<" ms / lqr)"<<std::endl;
 
+}
+
+TEST(LQRTest, quadSystemTest)
+{
+  Eigen::Matrix<double, stateDim, stateDim> A;
+  Eigen::Matrix<double, stateDim, controlDim> B;
+  Eigen::Matrix<double, stateDim, stateDim> Q;
+  Eigen::Matrix<double, controlDim, controlDim> R;
+  Eigen::Matrix<double, controlDim, stateDim> K;
+  Eigen::Matrix<double, controlDim, stateDim> Ksystem;
+
+  setABQR(A, B, Q, R);
+  Ksystem.setZero();
+  K.setZero();
+
+  ct::core::LTISystem<stateDim, controlDim> ltiSystem(A,B);
+
+  ct::optcon::LQR<stateDim, controlDim> lqr;
+
+  bool foundSolution = lqr.compute(Q, R, A, B, K, false);
+  ASSERT_TRUE(foundSolution);
+
+  //system is independent of x and u, so we initialize them random
+  core::StateVector<stateDim> x; x.setRandom();
+  core::ControlVector<controlDim> u; u.setRandom();
+
+  bool foundSolutionSystem = lqr.compute(ltiSystem, x, u, Q, R, Ksystem, false);
+  ASSERT_TRUE(foundSolutionSystem);
+
+  ASSERT_LT((K - Ksystem).array().abs().maxCoeff(), 1e-10);
 }
 
 #ifdef MATLAB
