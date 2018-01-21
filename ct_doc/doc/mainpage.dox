@@ -267,14 +267,13 @@ The Control Toolbox is released under the Apache Licence, Version 2.0
 
 \section cite_ct How to cite the CT
 
-A proper technical report about the CT is currently in preparation. Meanwhile, please cite the ct as follows:
 \code
 @misc{adrlCT,
-  author = {},
-  title = {{The `Control Toolbox', An Open Source Library for Robotics and Optimal Control}},
+  author = "Giftthaler, Markus and Neunert, Michael and {St\"auble}, Markus and Buchli, Jonas",
+  title = "The {Control Toolbox} - An Open-Source {C++} Library for Robotics, Optimal and Model Predictive Control",
   howpublished = "\url{https://adrlab.bitbucket.io/ct}",
-  year = {2017}, 
-  note = "[Online; accessed 25-November-2017]"
+  year = "2018", 
+  note = "arXiv:1801.04290 [cs.RO]"
 }
 \endcode
 
