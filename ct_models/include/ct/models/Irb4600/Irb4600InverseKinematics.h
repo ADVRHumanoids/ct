@@ -32,8 +32,10 @@ public:
         if (size_t(irb4600_ik::GetNumFreeParameters()) != freeJoints.size())
             throw "Error";
 
-        irb4600_ik::ComputeIk(eeBasePose.position().toImplementation().data(),
-            eeBasePose.getRotationMatrix().toImplementation().data(),
+        // Data needs to be in row-major form.
+        Eigen::Matrix<SCALAR, 3, 3, Eigen::RowMajor> eeBaseRotationRowMajor =
+            eeBasePose.getRotationMatrix().toImplementation();
+        irb4600_ik::ComputeIk(eeBasePose.position().toImplementation().data(), eeBaseRotationRowMajor.data(),
             freeJoints.size() > 0 ? freeJoints.data() : nullptr, solutions);
 
         size_t num_solutions = solutions.GetNumSolutions();
