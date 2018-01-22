@@ -11,8 +11,8 @@ Licensed under Apache2 license (see LICENSE file in main directory)
 
 #include <gtest/gtest.h>
 
-#include "ct/rbd/robot/Dynamics.h"
-#include "ct/rbd/robot/Kinematics.h"
+#include "../../../include/ct/rbd/robot/DynamicsBase.h"
+#include "../../../include/ct/rbd/robot/KinematicsBase.h"
 #include "../../models/testhyq/RobCoGenTestHyQ.h"
 
 using namespace ct::rbd;

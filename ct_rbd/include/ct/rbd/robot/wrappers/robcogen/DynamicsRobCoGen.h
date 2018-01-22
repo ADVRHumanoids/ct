@@ -6,17 +6,9 @@ Licensed under Apache2 license (see LICENSE file in main directory)
 
 #pragma once
 
-#include <memory>
-#include <ct/core/systems/continuous_time/ControlledSystem.h>
-#include "kinematics/RBDDataMap.h"
-#include "Kinematics.h"
-#include "ProjectedDynamics.h"
-#include "state/JointAcceleration.h"
-#include "state/JointState.h"
-#include "state/RBDAcceleration.h"
-#include "state/RBDState.h"
-#include "state/RigidBodyAcceleration.h"
-#include "control/SelectionMatrix.h"
+#include "../KinematicsBase.h"
+#include "../ProjectedDynamics.h"
+#include "KinematicsRobCoGen.h"
 
 #define ENABLE_FIX_BASE    \
     template <bool B = FB> \
@@ -41,10 +33,12 @@ namespace rbd {
  * @tparam NEE  The number of endeffectors
  */
 template <class RBD, size_t NEE>
-class Dynamics
+class DynamicsRobCoGen : public DynamicsBase<RBD::NJOINTS, RBD::NLINKS, ROBCOGEN::TRAIT::floating_base, typename ROBCOGEN::SCALAR>
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+	typedef DynamicsBase<RBD::NJOINTS, RBD::NLINKS, ROBCOGEN::TRAIT::floating_base, typename ROBCOGEN::SCALAR> Base;
 
     typedef RBD ROBCOGEN;
     typedef typename ROBCOGEN::SCALAR SCALAR;
@@ -79,19 +73,19 @@ public:
 
     typedef RBDDataMap<bool, NEE> EE_in_contact_t;
 
-    typedef Kinematics<RBD, NEE> Kinematics_t;
+    typedef KinematicsRobCoGen<RBD, NEE> KinematicsRobCoGen_t;
 
     /**
 	 * @brief The constructor
 	 * @param[in] 	kinematics	The kinematics of the RBD
 	 */
-    Dynamics(typename Kinematics_t::Ptr_t kinematics = typename Kinematics_t::Ptr_t(new Kinematics_t()))
-        : S_(FB), kinematics_(kinematics), p_dynamics_(kinematics)
+    DynamicsRobCoGen(typename KinematicsRobCoGen_t::Ptr_t kinematics = typename KinematicsRobCoGen_t::Ptr_t(new KinematicsRobCoGen_t()))
+        : Base(kinematics), p_dynamics_(kinematics)
     {
     }
 
-    Dynamics(const Dynamics& other) : S_(other.S_), kinematics_(other.kinematics_->clone()), p_dynamics_(kinematics_) {}
-    virtual ~Dynamics(){};
+    DynamicsRobCoGen(const DynamicsRobCoGen& other) : Base(other.kinematics_->clone()), p_dynamics(this->kinematicsPtr()) {}
+    virtual ~DynamicsRobCoGen(){};
 
 
     /**
@@ -105,7 +99,7 @@ public:
     ENABLE_FIX_BASE FixBaseForwardDynamics(const JointState_t& x,
         const control_vector_t& u,
         ExtLinkForces_t& force,
-        JointAcceleration_t& qdd);
+        JointAcceleration_t& qdd) override;
 
     /**
 	 * @brief Compute forward dynamics of a fixed-base RBD system,  NO contact forces
@@ -114,7 +108,7 @@ public:
 	 * @param[in] 	u	The control vector
 	 * @param[out]	qdd	The Joints acceleration
 	 */
-    ENABLE_FIX_BASE FixBaseForwardDynamics(const JointState_t& x, const control_vector_t& u, JointAcceleration_t& qdd)
+    ENABLE_FIX_BASE FixBaseForwardDynamics(const JointState_t& x, const control_vector_t& u, JointAcceleration_t& qdd) override
     {
         ExtLinkForces_t force(Eigen::Matrix<SCALAR, 6, 1>::Zero());
         FixBaseForwardDynamics(x, u, force, qdd);
@@ -131,7 +125,7 @@ public:
     ENABLE_FIX_BASE FixBaseID(const JointState_t& x,
         const JointAcceleration_t& qdd,
         const ExtLinkForces_t& force,
-        control_vector_t& u);
+        control_vector_t& u) override;
 
     /**
 	 * @brief Computes Inverse dynamics of a fixed-base system without external
@@ -140,7 +134,7 @@ public:
 	 * @param[in] 	qdd		the Joints acceleration
 	 * @param[out]	u		The control vector
 	 */
-    ENABLE_FIX_BASE FixBaseID(const JointState_t& x, const JointAcceleration_t& qdd, control_vector_t& u);
+    ENABLE_FIX_BASE FixBaseID(const JointState_t& x, const JointAcceleration_t& qdd, control_vector_t& u) override;
 
     /**
 	 * @brief Compute forward dynamics for an floating-base RBD system under external
@@ -153,7 +147,7 @@ public:
     ENABLE_FLOAT_BASE FloatingBaseForwardDynamics(const RBDState_t& x,
         const control_vector_t& u,
         const ExtLinkForces_t& link_forces,
-        RBDAcceleration_t& xd);
+        RBDAcceleration_t& xd) override;
 
     /**
 	 * @brief Computes Inverse dynamics of a floating-base system under external
@@ -168,7 +162,7 @@ public:
         const JointAcceleration_t& qdd,
         const ExtLinkForces_t& force,
         control_vector_t& u,
-        RigidBodyAcceleration_t& base_a);
+        RigidBodyAcceleration_t& base_a) override;
 
     /**
 	 * @brief Computes the inverse dynamics of a floating-base fully-actuated
@@ -185,7 +179,7 @@ public:
         const JointAcceleration_t& qdd,
         const ExtLinkForces_t& force,
         ForceVector_t& base_w,
-        control_vector_t& u);
+        control_vector_t& u) override;
 
 
     /**
@@ -229,18 +223,9 @@ public:
         p_dynamics_.ProjectedInverseDynamicsNoGravity(x, rbd_a, u);
     }
 
-    Kinematics_t& kinematics() { return *kinematics_; }
-    const Kinematics_t& kinematics() const { return *kinematics_; }
-    typename Kinematics_t::Ptr_t& kinematicsPtr() { return kinematics_; }
-    const typename Kinematics_t::Ptr_t& kinematicsPtr() const { return kinematics_; }
-    SelectionMatrix_t& S() { return S_; }
-    const SelectionMatrix_t& S() const { return S_; }
+
 private:
-    SelectionMatrix_t S_;
-
     EE_in_contact_t ee_contact_ = false;
-
-    typename Kinematics_t::Ptr_t kinematics_; /*!< The RBD kinematics */
     ProjectedDynamics<RBD, NEE> p_dynamics_;  /*!< The Projected Dynamics */
 
 protected:

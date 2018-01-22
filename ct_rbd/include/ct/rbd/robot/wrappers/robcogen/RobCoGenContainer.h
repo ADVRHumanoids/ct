@@ -160,19 +160,6 @@ public:
     // ForceTransform getForceTransformEEBaseById(size_t eeId, const typename JointState<NJOINTS>::Position& jointPosition);
 
     /*!
-	 * \brief Get the endeffector position expressed in the base frame
-	 *
-	 * @param eeId endeffector ID
-	 * @param jointPosition current joint position
-	 * @return position of the endeffector expressed in the base frame
-	 */
-    Position3Tpl getEEPositionInBase(size_t eeId,
-        const typename JointState<NJOINTS, SCALAR>::Position& jointPosition)
-    {
-        return Position3Tpl(getHomogeneousTransformBaseEEById(eeId, jointPosition).template topRightCorner<3, 1>());
-    }
-
-    /*!
      * \brief Get the endeffector pose expressed in the base frame
      *
 	 * @param eeId endeffector ID
@@ -188,15 +175,6 @@ public:
         RigidBodyPoseTpl pose(getHomogeneousTransformBaseEEById(eeId, jointPosition), storage);
         return pose;
     }
-
-    /*!
-     * compute the forward kinematics and return a rotation matrix specifying the ee-rotation w.r.t. the base frame
-     */
-    Matrix3Tpl getEERotInBase(size_t eeId, const typename JointState<NJOINTS, SCALAR>::Position& jointPosition)
-    {
-        return getHomogeneousTransformBaseEEById(eeId, jointPosition).template topLeftCorner<3, 3>();
-    }
-
 
 private:
     HomogeneousTransforms homogeneousTransforms_;

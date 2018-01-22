@@ -19,45 +19,29 @@ namespace ct {
 namespace rbd {
 
 /**
- * \brief A general class for computing Kinematic properties
+ * \brief A base class for computing Kinematic properties
  *
- * This class implements useful Kinematic quantities. It wraps RobCoGen to
- * have access to efficient transforms and jacobians.
+ * This class is an interface class for different RBD libraries
  */
-template <class RBD, size_t N_EE>
-class Kinematics
+template <size_t NJOINTS, typename SCALAR=double>
+class KinematicsBase
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    Kinematics(std::shared_ptr<RBD> rbdContainer = std::shared_ptr<RBD>(new RBD()))
-        : rbdContainer_(rbdContainer), floatingBaseTransforms_(rbdContainer_)
-    {
-        initEndeffectors(endEffectors_);
-    }
+	KinematicsBase() = default;
+    KinematicsBase(const KinematicsBase<NJOINTS, SCALAR>& other) = delete;
 
-    Kinematics(const Kinematics<RBD, N_EE>& other)
-        : rbdContainer_(new RBD()), endEffectors_(other.endEffectors_), floatingBaseTransforms_(rbdContainer_)
-    {
-    }
+    virtual ~KinematicsBase(){};
 
-    virtual ~Kinematics(){};
+    virtual KinematicsBase<NJOINTS, SCALAR>* clone() = 0;
 
-    Kinematics<RBD, N_EE>* clone() const { return new Kinematics<RBD, N_EE>(*this); }
-    static const size_t NUM_EE = N_EE;
-    static const size_t NJOINTS = RBD::NJOINTS;
-    static const size_t NLINKS = RBD::NLINKS;
+    using Ptr_t = std::shared_ptr<KinematicsBase<NJOINTS, SCALAR>>;
 
-    using Ptr_t = std::shared_ptr<Kinematics<RBD, N_EE>>;
+    using HomogeneousTransform = Eigen::Matrix<SCALAR, 6, 6>;
+    using ForceTransform = Eigen::Matrix<SCALAR, 6, 6>;
+    using Jacobian = Eigen::Matrix<SCALAR, 6, NJOINTS>;
 
-    using ROBCOGEN = RBD;
-    using SCALAR = typename ROBCOGEN::SCALAR;
-
-    using HomogeneousTransform = typename ROBCOGEN::HomogeneousTransform;
-    using HomogeneousTransforms = typename ROBCOGEN::HomogeneousTransforms;
-    using ForceTransform = typename ROBCOGEN::ForceTransform;
-    using Jacobian = typename ROBCOGEN::Jacobian;
-    using Jacobians = typename ROBCOGEN::Jacobians;
     using Vector3Tpl = Eigen::Matrix<SCALAR, 3, 1>;
     using Matrix3Tpl = Eigen::Matrix<SCALAR, 3, 3>;
     using Position3Tpl = kindr::Position<SCALAR, 3>;
@@ -68,67 +52,48 @@ public:
     using EEForceLinear = Vector3Tpl;
     using JointState_t = JointState<NJOINTS, SCALAR>;
 
-    void initEndeffectors(std::array<EndEffector<NJOINTS, SCALAR>, NUM_EE>& endeffectors)
-    {
-        for (size_t i = 0; i < NUM_EE; i++)
-        {
-            endeffectors[i].setLinkId(ROBCOGEN::UTILS::eeIdToLinkId(i));
-        }
-    }
-
     /**
      * \brief Get an end-effector
      * @param id end-effector id
      * @return
      */
-    EndEffector<NJOINTS, SCALAR>& getEndEffector(size_t id) { return endEffectors_[id]; };
+    virtual EndEffector<NJOINTS, SCALAR>& getEndEffector(size_t id) {
+    	throw std::runtime_error("getEndEffector not implemented by wrapper");
+    }
     /**
      * \brief Set an end-effector
      * @param id end-effector id
      * @param ee end-effector
      */
-    void setEndEffector(size_t id, const EndEffector<NJOINTS, SCALAR>& ee){};
+    virtual void setEndEffector(size_t id, const EndEffector<NJOINTS, SCALAR>& ee){
+    	throw std::runtime_error("setEndEffector not implemented by wrapper");
+    }
 
-    Jacobian getJacobianById(size_t linkId)
+    virtual Jacobian getJacobianById(size_t linkId)
     {
         throw std::runtime_error("getJacobian not implemented");
         return RigidBodyPoseTpl();
     };
 
-    FloatingBaseTransforms<RBD>& floatingBaseTransforms()
-    {
-        throw std::runtime_error("floating base transforms not implemented");
-        return floatingBaseTransforms_;
-    };
-    FloatingBaseTransforms<RBD>& floatingBaseTransforms() const
+    virtual FloatingBaseTransforms& floatingBaseTransforms()
     {
         throw std::runtime_error("floating base transforms not implemented");
         return floatingBaseTransforms_;
     };
 
-    const HomogeneousTransforms& transforms() const { return robcogen().homogeneousTransforms(); }
-    HomogeneousTransforms& transforms() { return robcogen().homogeneousTransforms(); }
-    const Jacobians& jacobians() const { return robcogen().jacobians(); }
-    Jacobians& jacobians() { return robcogen().jacobians(); }
-
-    Velocity3Tpl getEEVelocityInBase(size_t eeId, const RBDState<NJOINTS, SCALAR>& rbdState)
+    virtual FloatingBaseTransforms& floatingBaseTransforms() const
     {
-        Velocity3Tpl eeVelocityBase;
-        eeVelocityBase.toImplementation() =
-            (robcogen().getJacobianBaseEEbyId(eeId, rbdState.jointPositions()) * rbdState.jointVelocities())
-                .template bottomRows<3>();
+        throw std::runtime_error("floating base transforms not implemented");
+        return floatingBaseTransforms_;
+    };
 
-        // add translational velocity induced by linear base motion
-        eeVelocityBase += rbdState.base().velocities().getTranslationalVelocity();
-
-        // add translational velocity induced by angular base motion
-        eeVelocityBase += rbdState.base().velocities().getRotationalVelocity().cross(
-            getEEPositionInBase(eeId, rbdState.jointPositions()));
-
-        return eeVelocityBase;
+    virtual Velocity3Tpl getEEVelocityInBase(size_t eeId, const RBDState<NJOINTS, SCALAR>& rbdState)
+    {
+    	throw std::runtime_error("getEEVelocityInBase not implemented");
+        return Velocity3Tpl();
     }
 
-    Velocity3Tpl getEEVelocityInWorld(size_t eeId, const RBDState<NJOINTS, SCALAR>& rbdState)
+    virtual Velocity3Tpl getEEVelocityInWorld(size_t eeId, const RBDState<NJOINTS, SCALAR>& rbdState)
     {
         Velocity3Tpl eeVelocityBase = getEEVelocityInBase(eeId, rbdState);
         return rbdState.base().pose().rotateBaseToInertia(eeVelocityBase);
@@ -144,10 +109,11 @@ public:
      *      * @todo integrate this into getEEPoseInBase
      *
      */
-    Position3Tpl getEEPositionInBase(size_t eeID,
+    virtual Position3Tpl getEEPositionInBase(size_t eeID,
         const typename JointState_t::Position& jointPosition)
     {
-        return robcogen().getEEPositionInBase(eeID, jointPosition);
+    	throw std::runtime_error("getEEPositionInBase not implemented");
+		return Position3Tpl();
     }
 
     /*!
@@ -157,18 +123,20 @@ public:
      * @param jointPosition current robot joint positions
      * @return the current end-effector pose in base coordinates
      */
-    RigidBodyPoseTpl getEEPoseInBase(size_t eeID,
+    virtual RigidBodyPoseTpl getEEPoseInBase(size_t eeID,
         const typename JointState_t::Position& jointPosition)
     {
-        return robcogen().getEEPoseInBase(eeID, jointPosition);
+    	throw std::runtime_error("getEEPoseInBase not implemented");
+		return RigidBodyPoseTpl();
     }
 
     /*!
      * compute the forward kinematics and return a rotation matrix specifying the ee-rotation w.r.t. the base frame
      */
-    Matrix3Tpl getEERotInBase(size_t eeID, const typename JointState_t::Position& jointPosition)
+    virtual Matrix3Tpl getEERotInBase(size_t eeID, const typename JointState_t::Position& jointPosition)
     {
-        return robcogen().getEERotInBase(eeID, jointPosition);
+    	throw std::runtime_error("getEERotInBase not implemented");
+		return Matrix3Tpl();
     }
 
     /*!
@@ -181,7 +149,7 @@ public:
      *
      * @todo integrate this into getEEPoseInWorld
      */
-    Position3Tpl getEEPositionInWorld(size_t eeID,
+    virtual Position3Tpl getEEPositionInWorld(size_t eeID,
         const RigidBodyPoseTpl& basePose,
         const typename JointState_t::Position& jointPosition)
     {
@@ -196,7 +164,7 @@ public:
     }
 
     //! get the end-effector pose in world coordinates
-    RigidBodyPoseTpl getEEPoseInWorld(size_t eeID,
+    virtual RigidBodyPoseTpl getEEPoseInWorld(size_t eeID,
         const RigidBodyPoseTpl& basePose,
         const typename JointState_t::Position& jointPosition)
     {
@@ -214,7 +182,7 @@ public:
     }
 
     //! get the end-effector rotation matrix expressed in world coordinates
-    Matrix3Tpl getEERotInWorld(size_t eeID,
+    virtual Matrix3Tpl getEERotInWorld(size_t eeID,
         const RigidBodyPoseTpl& basePose,
         const typename JointState_t::Position& jointPosition)
     {
@@ -256,7 +224,7 @@ public:
      * @param eeId ID of the end-effector
      * @return
      */
-    EEForce mapForceFromWorldToLink3d(const Vector3Tpl& W_force,
+    virtual EEForce mapForceFromWorldToLink3d(const Vector3Tpl& W_force,
         const RigidBodyPoseTpl& basePose,
         const typename JointState_t::Position& jointPosition,
         size_t eeId)
@@ -276,7 +244,7 @@ public:
      * @param eeId ID of the end-effector
      * @return
      */
-    EEForce mapForceFromWorldToLink(const EEForce& W_force,
+    virtual EEForce mapForceFromWorldToLink(const EEForce& W_force,
         const RigidBodyPoseTpl& basePose,
         const typename JointState_t::Position& jointPosition,
         size_t eeId)
@@ -297,7 +265,7 @@ public:
      * @param eeId ID of the end-effector
      * @return
      */
-    EEForce mapForceFromWorldToLink(const EEForce& W_force,
+    virtual EEForce mapForceFromWorldToLink(const EEForce& W_force,
         const RigidBodyPoseTpl& basePose,
         const typename JointState_t::Position& jointPosition,
         const Position3Tpl& B_x_EE,
@@ -314,7 +282,7 @@ public:
                            basePose.template rotateInertiaToBase<Vector3Tpl>(W_force.torque());
 
         // transform force to link on which endeffector sits on
-        return EEForce(robcogen().getForceTransformLinkBaseById(linkId, jointPosition) * B_force);
+        return EEForce(getForceTransformLinkBaseById(linkId, jointPosition) * B_force);
     }
 
     /**
@@ -336,7 +304,7 @@ public:
      * @param eeId ID of the end-effector
      * @return
      */
-    EEForce mapForceFromEEToLink(const EEForce& EE_force,
+    virtual EEForce mapForceFromEEToLink(const EEForce& EE_force,
         const RigidBodyPoseTpl& T_B_EE,
         const typename JointState_t::Position& jointPosition,
         size_t eeId)
@@ -358,14 +326,18 @@ public:
             B_x_EE.cross(B_force.force()) + T_B_EE.template rotateBaseToInertia<Vector3Tpl>(EE_force.torque());
 
         // transform force to link on which endeffector sits on
-        return EEForce(robcogen().getForceTransformLinkBaseById(linkId, jointPosition) * B_force);
+        return EEForce(getForceTransformLinkBaseById(linkId, jointPosition) * B_force);
     };
 
-    RBD& robcogen() { return *rbdContainer_; }
+
+    virtual ForceTransform getForceTransformLinkBaseById(size_t linkId, const typename JointState_t::Position& jointPosition)
+	{
+    	throw std::runtime_error("getForceTransformLinkBaseById not implemented");
+    	return ForceTransform();
+	}
+
 private:
-    std::shared_ptr<RBD> rbdContainer_;
-    std::array<EndEffector<NJOINTS, SCALAR>, N_EE> endEffectors_;
-    FloatingBaseTransforms<RBD> floatingBaseTransforms_;
+    FloatingBaseTransforms floatingBaseTransforms_;
 
     std::unordered_map<size_t, std::shared_ptr<InverseKinematicsBase<NJOINTS, SCALAR>>> ikSolvers_;
 };

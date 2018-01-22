@@ -10,8 +10,8 @@ Licensed under Apache2 license (see LICENSE file in main directory)
 #include <ct/optcon/costfunction/utility/utilities.hpp>
 
 #include <iit/rbd/traits/TraitSelector.h>
-#include <ct/rbd/robot/Kinematics.h>
 #include <ct/rbd/state/RBDState.h>
+#include "../KinematicsBase.h"
 
 
 namespace ct {

@@ -11,10 +11,10 @@ Licensed under Apache2 license (see LICENSE file in main directory)
 #include <gtest/gtest.h>
 
 #include <ct/rbd/rbd.h>
+#include "../../../include/ct/rbd/robot/DynamicsBase.h"
+#include "../../../include/ct/rbd/robot/KinematicsBase.h"
 
 #include "../../models/testIrb4600/RobCoGenTestIrb4600.h"
-#include "ct/rbd/robot/Dynamics.h"
-#include "ct/rbd/robot/Kinematics.h"
 
 using namespace ct::rbd;
 

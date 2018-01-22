@@ -8,7 +8,7 @@ Licensed under Apache2 license (see LICENSE file in main directory)
 
 #include "jacobian/ConstraintJacobian.h"
 #include "kinematics/RBDDataMap.h"
-#include "Kinematics.h"
+#include "KinematicsRobCoGen.h"
 #include "state/JointAcceleration.h"
 #include "state/RBDAcceleration.h"
 #include "state/RBDState.h"
@@ -56,7 +56,7 @@ public:
 	 * @param[in]	kyn     Robot Kinematics
 	 * @param[in]  ee_inc  The EE Boolean Data Map with the end effectors in contact
 	 */
-    ProjectedDynamics(const std::shared_ptr<Kinematics<RBD, NEE>> kyn,
+    ProjectedDynamics(const std::shared_ptr<KinematicsRobCoGen<RBD, NEE>> kyn,
         const EE_in_contact_t ee_inc = EE_in_contact_t(false));
 
     ~ProjectedDynamics(){};
@@ -175,7 +175,7 @@ private:
     void ResetJacobianStructure();
 
 private:
-    std::shared_ptr<Kinematics<RBD, NEE>> kinematics_; /*!< The RBD kinematics */
+    std::shared_ptr<KinematicsRobCoGen<RBD, NEE>> kinematics_; /*!< The RBD kinematics */
 
     EE_in_contact_t ee_in_contact_; /*!< the contact configuration data map*/
 
@@ -192,7 +192,7 @@ private:
     inertia_matrix_t Cc_;      /*!< Internal forces (ToDo: find better name)*/
 
 
-    tpl::ConstraintJacobian<Kinematics<RBD, NEE>, MAX_JAC_SIZE, NJOINTS, Scalar>
+    tpl::ConstraintJacobian<KinematicsRobCoGen<RBD, NEE>, MAX_JAC_SIZE, NJOINTS, Scalar>
         Jc_; /*!< The Jacobian of the constraint */
 
     inertia_matrix_t P_; /*!< The Projector */
@@ -200,7 +200,7 @@ private:
 };
 
 template <class RBD, size_t NEE>
-ProjectedDynamics<RBD, NEE>::ProjectedDynamics(const std::shared_ptr<Kinematics<RBD, NEE>> kyn,
+ProjectedDynamics<RBD, NEE>::ProjectedDynamics(const std::shared_ptr<KinematicsRobCoGen<RBD, NEE>> kyn,
     const EE_in_contact_t ee_inc /*= EE_in_Contact_t(false)*/)
     : kinematics_(kyn), ee_in_contact_(ee_inc)
 {

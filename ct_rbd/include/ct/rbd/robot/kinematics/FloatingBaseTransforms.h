@@ -17,12 +17,11 @@ class FloatingBaseTransforms
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    FloatingBaseTransforms(std::shared_ptr<RBD> rbdContainer) : rbdContainer_(rbdContainer) {}
+    FloatingBaseTransforms() {}
     virtual ~FloatingBaseTransforms(){};
 
 
 private:
-    std::shared_ptr<RBD> rbdContainer_;
 };
 
 } /* namespace rbd */
