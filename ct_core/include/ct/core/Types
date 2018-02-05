@@ -8,7 +8,10 @@ Licensed under Apache2 license (see LICENSE file in main directory)
 
 #include "types/Time.h"
 
+#ifdef CPPAD_ENABLED
 #include "types/AutoDiff.h"
+#endif
+
 #include "types/ControlVector.h"
 #include "types/StateVector.h"
 #include "types/FeedbackMatrix.h"

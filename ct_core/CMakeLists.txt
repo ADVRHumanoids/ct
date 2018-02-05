@@ -79,10 +79,16 @@ set(CODEGEN_TEMPLATE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/templates")
 set(CODEGEN_OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/generated")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/ct/core/templateDir.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/ct/core/templateDir.h)
 
-add_library(ct_core
-   src/core/plot/plot.cpp
-   src/core/internal/autodiff/SparsityPattern.cpp
-)
+if(CPPAD_ENABLED)
+  add_library(ct_core
+    src/core/plot/plot.cpp
+    src/core/internal/autodiff/SparsityPattern.cpp
+  )
+else()
+  add_library(ct_core
+    src/core/plot/plot.cpp
+  )
+endif()
 
 # add libraries for explicit template
 target_link_libraries(ct_core ${catkin_LIBRARIES} ${PYTHON_LIBRARY})

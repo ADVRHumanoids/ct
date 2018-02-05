@@ -112,6 +112,7 @@ public:
         configure(settingsDms);
     }
 
+#ifdef CPPAD_ENABLED
     virtual void generateAndCompileCode(const OptConProblem<STATE_DIM, CONTROL_DIM, ct::core::ADCGScalar>& problemCG,
         const ct::core::DerivativesCppadSettings& settings) override
     {
@@ -145,6 +146,7 @@ public:
         dmsProblem_->generateAndCompileCode(
             systemsCG, linearSystemsCG, costFunctionsCG, boxConstraintsCG, generalConstraintsCG, x0CG);
     }
+#endif
 
     /**
 	 * @brief      Destructor

@@ -6,8 +6,6 @@ Licensed under Apache2 license (see LICENSE file in main directory)
 
 #pragma once
 
-#include <cppad/example/cppad_eigen.hpp>
-
 #include "LinearConstraintContainer.h"
 #include "term/ConstraintBase.h"
 

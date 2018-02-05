@@ -15,4 +15,7 @@ Licensed under Apache2 license (see LICENSE file in main directory)
 #include "ConstraintContainerBase-impl.h"
 #include "LinearConstraintContainer-impl.h"
 #include "ConstraintContainerAnalytical-impl.h"
+
+#ifdef CPPAD_ENABLED
 #include "ConstraintContainerAD-impl.h"
+#endif

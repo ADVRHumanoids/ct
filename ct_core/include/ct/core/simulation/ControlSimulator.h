@@ -10,6 +10,7 @@ Licensed under Apache2 license (see LICENSE file in main directory)
 #include <chrono>
 #include <thread>
 #include <memory>
+#include <mutex>
 
 #include <ct/core/types/Time.h>
 #include <ct/core/types/StateVector.h>

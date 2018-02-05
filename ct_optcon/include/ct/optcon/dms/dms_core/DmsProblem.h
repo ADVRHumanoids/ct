@@ -161,6 +161,7 @@ public:
         this->optVariables_->resizeConstraintVars(this->getConstraintsCount());
     }
 
+#ifdef CPPAD_ENABLED
     void generateAndCompileCode(
         std::vector<std::shared_ptr<core::ControlledSystem<STATE_DIM, CONTROL_DIM, ct::core::ADCGScalar>>> systemPtrs,
         std::vector<std::shared_ptr<core::LinearSystem<STATE_DIM, CONTROL_DIM, ct::core::ADCGScalar>>> linearPtrs,
@@ -308,6 +309,7 @@ public:
             this->constraintsCodegen_->compileJIT(settings_.cppadSettings_, "dmsConstraints");
         }
     }
+#endif
 
     /**
 	 * @brief      Destructor

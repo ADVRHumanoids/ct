@@ -288,6 +288,7 @@ public:
     virtual const std::vector<typename OptConProblem_t::ConstraintPtr_t>& getGeneralConstraintsInstances() const = 0;
 
 
+#ifdef CPPAD_ENABLED
     /**
 	 * @brief      Generates and compiles AD source code which can be used in
 	 *             the solver. This method can be called just before solving the
@@ -314,6 +315,8 @@ public:
     {
         throw std::runtime_error("Generate Code not implemented for this solver");
     }
+#endif
+
 };
 }
 }

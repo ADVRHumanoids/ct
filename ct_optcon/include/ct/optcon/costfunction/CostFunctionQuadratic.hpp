@@ -72,9 +72,11 @@ public:
     virtual size_t addIntermediateTerm(std::shared_ptr<TermBase<STATE_DIM, CONTROL_DIM, SCALAR>> term,
         bool verbose = false);
 
+#ifdef CPPAD_ENABLED
     virtual void addIntermediateADTerm(
         std::shared_ptr<TermBase<STATE_DIM, CONTROL_DIM, SCALAR, ct::core::ADCGScalar>> term,
         bool verbose = false);
+#endif
 
     /**
 	 * \brief Adds a final term
@@ -84,8 +86,10 @@ public:
 	 */
     virtual size_t addFinalTerm(std::shared_ptr<TermBase<STATE_DIM, CONTROL_DIM, SCALAR>> term, bool verbose = false);
 
+#ifdef CPPAD_ENABLED
     virtual void addFinalADTerm(std::shared_ptr<TermBase<STATE_DIM, CONTROL_DIM, SCALAR, ct::core::ADCGScalar>> term,
         bool verbose = false);
+#endif
 
     /**
 	 * \brief Loads cost function from config file

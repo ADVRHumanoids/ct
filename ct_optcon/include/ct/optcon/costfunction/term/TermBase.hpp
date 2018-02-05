@@ -80,6 +80,7 @@ public:
         const Eigen::Matrix<SCALAR, CONTROL_DIM, 1>& u,
         const SCALAR& t) = 0;
 
+#ifdef CPPAD_ENABLED
     /**
 	 * @brief      The evaluate method used for jit compilation in CostfunctionAD
 	 *
@@ -92,6 +93,7 @@ public:
     virtual ct::core::ADCGScalar evaluateCppadCg(const core::StateVector<STATE_DIM, ct::core::ADCGScalar>& x,
         const core::ControlVector<CONTROL_DIM, ct::core::ADCGScalar>& u,
         ct::core::ADCGScalar t);
+#endif
 
     /**
 	 * @brief      Gets called by the analytical costfunction. Adds time

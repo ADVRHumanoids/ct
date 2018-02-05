@@ -7,7 +7,6 @@ Licensed under Apache2 license (see LICENSE file in main directory)
 #pragma once
 
 #include "ActivationBase.hpp"
-#include <ct/core/internal/traits/TraitSelectorSpecs.h>
 
 namespace ct {
 namespace core {

@@ -11,11 +11,17 @@
 #include "term/TermQuadratic.hpp"
 #include "term/TermQuadMult.hpp"
 #include "term/TermQuadTracking.hpp"
+
+#ifdef CPPAD_ENABLED
 #include "term/TermStateBarrier.hpp"
+#endif
 
 // costfunctions
 #include "CostFunction.hpp"
 #include "CostFunctionQuadratic.hpp"
-#include "CostFunctionAD.hpp"
 #include "CostFunctionAnalytical.hpp"
 #include "CostFunctionQuadraticSimple.hpp"
+
+#ifdef CPPAD_ENABLED
+#include "CostFunctionAD.hpp"
+#endif

@@ -6,7 +6,6 @@ Licensed under Apache2 license (see LICENSE file in main directory)
 
 #pragma once
 
-#include <ct/optcon/constraint/ConstraintContainerAD.h>
 #include <ct/optcon/nlp/DiscreteConstraintBase.h>
 
 #include <ct/optcon/dms/dms_core/OptVectorDms.h>

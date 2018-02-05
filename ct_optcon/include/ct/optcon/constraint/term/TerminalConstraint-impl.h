@@ -52,6 +52,7 @@ TerminalConstraint<STATE_DIM, CONTROL_DIM, SCALAR>::evaluate(const state_vector_
     return x - xF_;
 }
 
+#ifdef CPPAD_ENABLED
 template <size_t STATE_DIM, size_t CONTROL_DIM, typename SCALAR>
 Eigen::Matrix<ct::core::ADCGScalar, Eigen::Dynamic, 1>
 TerminalConstraint<STATE_DIM, CONTROL_DIM, SCALAR>::evaluateCppadCg(
@@ -61,6 +62,7 @@ TerminalConstraint<STATE_DIM, CONTROL_DIM, SCALAR>::evaluateCppadCg(
 {
     return x - xF_.template cast<ct::core::ADCGScalar>();
 }
+#endif
 
 template <size_t STATE_DIM, size_t CONTROL_DIM, typename SCALAR>
 typename TerminalConstraint<STATE_DIM, CONTROL_DIM, SCALAR>::MatrixXs

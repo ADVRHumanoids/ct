@@ -19,8 +19,6 @@ Licensed under Apache2 license (see LICENSE file in main directory)
 #include "internal/SteppersODEInt.h"
 #include "internal/SteppersCT.h"
 
-#include <ct/core/types/AutoDiff.h>
-
 namespace ct {
 namespace core {
 
@@ -242,7 +240,7 @@ private:
 	 *
 	 */
     template <typename S = SCALAR>
-    typename std::enable_if<std::is_same<S, double>::value, void>::type initializeAdaptiveSteppers(
+    void initializeAdaptiveSteppers(
         const IntegrationType& intType)
     {
         switch (intType)
@@ -280,18 +278,6 @@ private:
         }
     }
 
-    template <typename S = SCALAR>
-    typename std::enable_if<!std::is_same<S, double>::value, void>::type initializeAdaptiveSteppers(
-        const IntegrationType& intType)
-    {
-    }
-
-    template <typename S = SCALAR>
-    typename std::enable_if<std::is_same<S, ADCGScalar>::value, void>::type initializeODEIntSteppers(
-        const IntegrationType& intType)
-    {
-    }
-
 
     /**
 	 * @brief      Initializes the ODEint fixed size steppers. Does not work for
@@ -301,7 +287,7 @@ private:
 	 *
 	 */
     template <typename S = SCALAR>
-    typename std::enable_if<!std::is_same<S, ADCGScalar>::value, void>::type initializeODEIntSteppers(
+    void initializeODEIntSteppers(
         const IntegrationType& intType)
     {
         switch (intType)

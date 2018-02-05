@@ -1,11 +1,7 @@
 
 #pragma once
 
-#include <cmath>
-#include <math.h>
-
 #include "../activations/ActivationBase.hpp"
-#include <ct/core/internal/traits/TraitSelectorSpecs.h>
 
 namespace ct {
 namespace core {

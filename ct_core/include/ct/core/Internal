@@ -6,12 +6,14 @@ Licensed under Apache2 license (see LICENSE file in main directory)
 
 #pragma once
 
+#ifdef CPPAD_ENABLED
 #include "internal/autodiff/ADHelpers.h"
 #include "internal/autodiff/CGHelpers.h"
 #include "internal/autodiff/CppadParallel.h"
 #include "internal/autodiff/SparsityPattern.h"
+#include "internal/traits/TraitSelectorSpecs.h"
+#endif 
 
 #include "internal/traits/TraitSelector.h"
-#include "internal/traits/TraitSelectorSpecs.h"
 #include "internal/traits/DoubleTrait.h"
 

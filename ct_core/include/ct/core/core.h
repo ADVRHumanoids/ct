@@ -11,12 +11,15 @@ Licensed under Apache2 license (see LICENSE file in main directory)
 #include <vector>
 #include <cstdlib>
 
+#ifdef CPPAD_ENABLED
 #include <cppad/cg.hpp>
 
 #include <cppad/cppad.hpp>
 #include <cppad/example/cppad_eigen.hpp>
 #include <cppad/example/eigen_mat_inv.hpp>
 #include "internal/autodiff/CppadParallel.h"
+#endif
+
 
 // Include file for convenience
 #include <Eigen/Core>
@@ -25,13 +28,13 @@ Licensed under Apache2 license (see LICENSE file in main directory)
 #include <unsupported/Eigen/MatrixFunctions>
 
 // Declarations
+#include "Internal"
 #include "Common"
 #include "Types"
 #include "Control"
 #include "Systems"
 #include "Integration"
 #include "Geometry"
-#include "Internal"
 #include "Math"
 #include "Simulation"
 

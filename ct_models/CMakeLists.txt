@@ -54,8 +54,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/ct/models/CodegenOutputDirs.h
 ct_add_explicit_template_libs()
 
 ################ HyQ #################
-add_executable(HyQLinearizationCodgen src/HyQ/codegen/HyQLinearizationCodgen.cpp)
-target_link_libraries(HyQLinearizationCodgen ${catkin_LIBRARIES} )
+if(CPPAD_ENABLED)
+  add_executable(HyQLinearizationCodgen src/HyQ/codegen/HyQLinearizationCodgen.cpp)
+  target_link_libraries(HyQLinearizationCodgen ${catkin_LIBRARIES} )
+endif()
 
 if (BUILD_HYQ_FULL)
   if (NOT USE_CLANG)

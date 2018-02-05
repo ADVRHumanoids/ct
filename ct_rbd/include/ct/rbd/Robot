@@ -20,7 +20,9 @@ Licensed under Apache2 license (see LICENSE file in main directory)
 #include "robot/control/JointPositionPIDController.h"
 #include "robot/control/SelectionMatrix.h"
 
+#ifdef CPPAD_ENABLED
 #include "robot/costfunction/TermTaskspacePosition.hpp"
 #include "robot/costfunction/TermTaskspacePose.hpp"
+#endif CPPAD_ENABLED
 
 #include "robot/kinematics/EndEffector.h"

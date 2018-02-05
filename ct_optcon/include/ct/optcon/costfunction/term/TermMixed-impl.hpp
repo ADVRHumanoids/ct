@@ -74,6 +74,7 @@ SCALAR TermMixed<STATE_DIM, CONTROL_DIM, SCALAR_EVAL, SCALAR>::evaluate(const Ei
     return evalLocal<SCALAR>(x, u, t);
 }
 
+#ifdef CPPAD_ENABLED
 template <size_t STATE_DIM, size_t CONTROL_DIM, typename SCALAR_EVAL, typename SCALAR>
 ct::core::ADCGScalar TermMixed<STATE_DIM, CONTROL_DIM, SCALAR_EVAL, SCALAR>::evaluateCppadCg(
     const core::StateVector<STATE_DIM, ct::core::ADCGScalar>& x,
@@ -82,6 +83,7 @@ ct::core::ADCGScalar TermMixed<STATE_DIM, CONTROL_DIM, SCALAR_EVAL, SCALAR>::eva
 {
     return evalLocal<ct::core::ADCGScalar>(x, u, t);
 }
+#endif
 
 template <size_t STATE_DIM, size_t CONTROL_DIM, typename SCALAR_EVAL, typename SCALAR>
 ct::core::StateVector<STATE_DIM, SCALAR_EVAL> TermMixed<STATE_DIM, CONTROL_DIM, SCALAR_EVAL, SCALAR>::stateDerivative(
