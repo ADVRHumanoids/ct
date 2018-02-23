@@ -65,9 +65,11 @@ The following dependencies and bindings are optional but can help to enhance the
 
 In order to build the library, execute the following commands in your terminal
 \code{.sh}
+mkdir -p catkin_ws/src
 cd catkin_ws/src
 git clone https://github.com/ethz-asl/kindr.git
 git clone https://bitbucket.org/adrlab/ct.git
+cd ..
 catkin build -DCMAKE_BUILD_TYPE=RELEASE 
 \endcode
 
