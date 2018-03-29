@@ -16,8 +16,9 @@ Complete list of authors who contributed code to the Control Toolbox:
 
 Michael Neunert,
 Markus Giftthaler,
-Markus St√§uble,
+Markus St‰uble,
 Diego Pardo,
 Farbod Farshidian,
 Timothy Sandy,
-Jan Carius
+Jan Carius,
+Ruben Grandia
