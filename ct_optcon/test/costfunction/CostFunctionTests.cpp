@@ -9,6 +9,7 @@ Licensed under Apache2 license (see LICENSE file in main directory)
 
 #include "ADTest_timeDependent.h"
 #include "CostFunctionTest.h"
+#include "CostFunctionParametrizedTest.h"
 
 
 int main(int argc, char **argv)

@@ -42,6 +42,15 @@ public:
 
     virtual ~TermLinear();
 
+    core::StateVector<STATE_DIM, SCALAR_EVAL>& a() { return a; }
+    const core::StateVector<STATE_DIM, SCALAR_EVAL>& a() const { return a_; }
+
+    core::ControlVector<CONTROL_DIM, SCALAR_EVAL>& b() { return b; }
+    const core::ControlVector<CONTROL_DIM, SCALAR_EVAL>& b() const { return b_; }
+
+    SCALAR_EVAL& c() { return c; }
+    const SCALAR_EVAL& c() const { return c_; }
+
     SCALAR evaluate(const Eigen::Matrix<SCALAR, STATE_DIM, 1> &x,
         const Eigen::Matrix<SCALAR, CONTROL_DIM, 1> &u,
         const SCALAR &t) override;
