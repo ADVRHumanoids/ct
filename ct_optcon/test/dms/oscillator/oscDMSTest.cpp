@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -108,7 +107,7 @@ public:
         generalConstraints_->addTerminalConstraint(termConstraint, true);
         generalConstraints_->initialize();
 
-        OptConProblem<2, 1> optProblem(oscillator_, costFunction_);
+        ContinuousOptConProblem<2, 1> optProblem(oscillator_, costFunction_);
         optProblem.setInitialState(x_0_);
 
         optProblem.setTimeHorizon(settings_.T_);
@@ -139,7 +138,7 @@ public:
         generalConstraints_->addTerminalConstraint(termConstraint, true);
         generalConstraints_->initialize();
 
-        OptConProblem<2, 1> optProblem(oscillator_, costFunction_);
+        ContinuousOptConProblem<2, 1> optProblem(oscillator_, costFunction_);
         optProblem.setInitialState(x_0_);
 
         optProblem.setTimeHorizon(settings_.T_);

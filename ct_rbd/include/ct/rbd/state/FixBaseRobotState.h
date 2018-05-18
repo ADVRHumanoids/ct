@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -96,9 +95,9 @@ public:
     //! accessor to actuator state
     const actuator_state_vector_t& actuatorState() const { return act_state_; }
     //! accessor to single element of actuator state
-    SCALAR& actuatorState(size_t i) {return act_state_(i);}
+    SCALAR& actuatorState(size_t i) { return act_state_(i); }
     //! accessor to single element of actuator state
-    const SCALAR& actuatorState(size_t i) const {return act_state_(i);}
+    const SCALAR& actuatorState(size_t i) const { return act_state_(i); }
     //! accessor to joint state
     JointState_t& joints() { return joints_; }
     //! accessor to joint state

@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -15,6 +14,9 @@ namespace NS2 {
 class DERIVATIVE_NAME : public core::Derivatives<IN_DIM, OUT_DIM, double>
 {
 public:
+
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     typedef Eigen::Matrix<double, OUT_DIM, 1> OUT_TYPE;
     typedef Eigen::Matrix<double, IN_DIM, 1> X_TYPE;
 

@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -66,7 +65,7 @@ public:
     using box_constr_sparsity_t = Eigen::Matrix<int, max_box_constr_dim, 1>;
 
     //! constructor
-    HPIPMInterface(int N = -1);
+    HPIPMInterface(const int N = -1, const int nb = 0, const int ng = 0);
 
     //! destructor
     virtual ~HPIPMInterface();
@@ -108,6 +107,8 @@ public:
     virtual void initializeAndAllocate() override;
 
 private:
+    void setSolverDimensions(const int N, const int nb = 0, const int ng = 0);
+
     /*!
      * @brief set problem implementation for hpipm
      * \warning This method is called in the loop. As little memory as possible
@@ -132,7 +133,6 @@ private:
      * @param Q pure state-cost term \f$ \mathbf Q_n \f$ (second order derivative)
      * @param rv pure input-cost term \f$ \mathbf r_n \f$ (first order derivative)
      * @param R pure input-cost term \f$ \mathbf R_n \f$ (second order derivative)
-     * @param keepPointers keep pointers
      *
      *
      * This method needs change coordinate systems, in the sense that
@@ -150,8 +150,7 @@ private:
         StateVectorArray& qv,
         StateMatrixArray& Q,
         ControlVectorArray& rv,
-        ControlMatrixArray& R,
-        bool keepPointers = false);
+        ControlMatrixArray& R);
 
     /*!
      * @brief change number of states of the optimal control problem
@@ -238,6 +237,9 @@ private:
     std::vector<double*> hC_;
     //! general constraint jacobians w.r.t. controls (presumably)
     std::vector<double*> hD_;
+    //! local vars for constraint bounds for statge k=0, which need to be different by HPIPM convention
+    Eigen::VectorXd hd_lg_0_Eigen_;
+    Eigen::VectorXd hd_ug_0_Eigen_;
 
 
     /*

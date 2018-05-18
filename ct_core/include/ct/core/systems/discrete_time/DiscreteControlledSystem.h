@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -45,8 +44,11 @@ public:
 
     typedef typename std::shared_ptr<DiscreteControlledSystem<STATE_DIM, CONTROL_DIM, SCALAR>> Ptr;
 
-    typedef StateVector<STATE_DIM, SCALAR> state_vector_t;        //<! state vector type
-    typedef ControlVector<CONTROL_DIM, SCALAR> control_vector_t;  //<! control vector type
+    typedef DiscreteSystem<STATE_DIM, CONTROL_DIM, SCALAR> Base;
+
+    typedef typename Base::state_vector_t state_vector_t;
+    typedef typename Base::control_vector_t control_vector_t;
+    typedef typename Base::time_t time_t;
 
     //! default constructor
     /*!
@@ -110,7 +112,7 @@ public:
 	 * @param n time index to propagate the dynamics at
 	 * @param stateNext the resulting propagated state
 	 */
-    virtual void propagateDynamics(const state_vector_t& state, const int& n, state_vector_t& stateNext) override
+    virtual void propagateDynamics(const state_vector_t& state, const time_t n, state_vector_t& stateNext) override
     {
         control_vector_t controlAction;
         if (controller_)
@@ -131,7 +133,7 @@ public:
 	 * @param stateNext the resulting propagated state
 	 */
     virtual void propagateControlledDynamics(const state_vector_t& state,
-        const int& n,
+        const time_t n,
         const control_vector_t& control,
         state_vector_t& stateNext) = 0;
 

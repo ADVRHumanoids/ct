@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
  **********************************************************************************************************************/
 
@@ -10,18 +9,18 @@ Licensed under Apache2 license (see LICENSE file in main directory)
 namespace ct {
 namespace optcon {
 
-template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR>
-NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR>::NLOCBackendMP(
-    const OptConProblem<STATE_DIM, CONTROL_DIM, SCALAR>& optConProblem,
+template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
+NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::NLOCBackendMP(
+    const OptConProblem_t& optConProblem,
     const NLOptConSettings& settings)
     : Base(optConProblem, settings)
 {
     startupRoutine();
 }
 
-template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR>
-NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR>::NLOCBackendMP(
-    const OptConProblem<STATE_DIM, CONTROL_DIM, SCALAR>& optConProblem,
+template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
+NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::NLOCBackendMP(
+    const OptConProblem_t& optConProblem,
     const std::string& settingsFile,
     bool verbose,
     const std::string& ns)
@@ -31,21 +30,21 @@ NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR>::NLOCBackendMP(
 }
 
 
-template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR>
-NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR>::~NLOCBackendMP()
+template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
+NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::~NLOCBackendMP()
 {
     shutdownRoutine();
 };
 
-template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR>
-void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR>::startupRoutine()
+template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
+void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::startupRoutine()
 {
     launchWorkerThreads();
 }
 
 
-template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR>
-void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR>::shutdownRoutine()
+template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
+void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::shutdownRoutine()
 {
     workersActive_ = false;
     workerTask_ = SHUTDOWN;
@@ -66,8 +65,8 @@ void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR>::shutdownRoutin
 }
 
 
-template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR>
-void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR>::threadWork(size_t threadId)
+template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
+void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::threadWork(size_t threadId)
 {
 #ifdef DEBUG_PRINT_MP
     printString("[Thread " + std::to_string(threadId) + "]: launched");
@@ -95,10 +94,10 @@ void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR>::threadWork(siz
 
 
         /*!
-		 * We want to put the worker to sleep if
-		 * - the workerTask_ is IDLE
-		 * - or we are finished but workerTask_ is not yet reset, thus the process ID is still the same
-		 * */
+         * We want to put the worker to sleep if
+         * - the workerTask_ is IDLE
+         * - or we are finished but workerTask_ is not yet reset, thus the process ID is still the same
+         * */
         if (workerTask_local == IDLE ||
             uniqueProcessID == generateUniqueProcessID(iteration_local, (int)workerTask_local, lqpCounter_local))
         {
@@ -191,8 +190,8 @@ void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR>::threadWork(siz
 }
 
 
-template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR>
-void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR>::launchWorkerThreads()
+template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
+void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::launchWorkerThreads()
 {
 #ifdef DEBUG_PRINT_MP
     printString("[MP]: Going to launch worker threads!");
@@ -209,8 +208,8 @@ void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR>::launchWorkerTh
 }
 
 
-template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR>
-void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR>::computeLQApproximation(size_t firstIndex,
+template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
+void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::computeLQApproximation(size_t firstIndex,
     size_t lastIndex)
 {
     // fill terminal cost
@@ -273,8 +272,8 @@ void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR>::computeLQAppro
 }
 
 
-template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR>
-void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR>::computeLQProblemWorker(size_t threadId)
+template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
+void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::computeLQProblemWorker(size_t threadId)
 {
     while (true)
     {
@@ -312,8 +311,9 @@ void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR>::computeLQProbl
 }
 
 
-template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR>
-void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR>::rolloutShots(size_t firstIndex, size_t lastIndex)
+template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
+void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::rolloutShots(size_t firstIndex,
+    size_t lastIndex)
 {
     /*!
 	 * In special cases, this function may be called for a single index, e.g. for the unconstrained GNMS real-time iteration scheme.
@@ -373,8 +373,8 @@ void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR>::rolloutShots(s
 }
 
 
-template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR>
-void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR>::rolloutShotWorker(size_t threadId)
+template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
+void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::rolloutShotWorker(size_t threadId)
 {
     while (true)
     {
@@ -407,8 +407,8 @@ void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR>::rolloutShotWor
 }
 
 
-template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR>
-SCALAR NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR>::performLineSearch()
+template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
+SCALAR NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::performLineSearch()
 {
     Eigen::setNbThreads(1);  // disable Eigen multi-threading
 
@@ -473,8 +473,8 @@ SCALAR NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR>::performLineS
 }  // end linesearch
 
 
-template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR>
-void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR>::lineSearchWorker(size_t threadId)
+template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
+void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::lineSearchWorker(size_t threadId)
 {
     while (true)
     {
@@ -610,16 +610,17 @@ void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR>::lineSearchWork
     }
 }
 
-template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR>
-size_t NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR>::generateUniqueProcessID(const size_t& iterateNo,
+template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
+size_t NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::generateUniqueProcessID(
+    const size_t& iterateNo,
     const int workerState,
     const size_t resetCount)
 {
     return (10e12 * (resetCount + 1) + 10e6 * (workerState + 1) + iterateNo + 1);
 }
 
-template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR>
-void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR>::printString(const std::string& text)
+template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
+void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::printString(const std::string& text)
 {
     std::cout << text << std::endl;
 }

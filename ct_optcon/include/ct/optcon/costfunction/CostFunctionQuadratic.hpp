@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -171,10 +170,10 @@ public:
     virtual void updateReferenceControl(const control_vector_t& u_ref);
 
     //! compare the state derivative against numerical differentiation
-    bool stateDerivativeIntermediateTest();
+    bool stateDerivativeIntermediateTest(bool verbose = false);
 
     //! compare the control derivative against numerical differentiation
-    bool controlDerivativeIntermediateTest();
+    bool controlDerivativeIntermediateTest(bool verbose = false);
 
     std::shared_ptr<TermBase<STATE_DIM, CONTROL_DIM, SCALAR>> getIntermediateTermById(const size_t id);
 

@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
  **********************************************************************************************************************/
 
@@ -91,12 +90,13 @@ void LQOCProblem<STATE_DIM, CONTROL_DIM, SCALAR>::setZero(const int& nGenConstr)
     q_.setConstant((SCALAR)0.0);
 
     // reset the number of box constraints
-    std::fill(nb_.begin(), nb_.end(), 0);
 
+    // reset general constraints
+    std::fill(nb_.begin(), nb_.end(), 0);
     assert(d_lb_.size() == d_ub_.size());
     assert(d_lb_.size() == C_.size());
     assert(d_lb_.size() == D_.size());
-    std::fill(ng_.begin(), ng_.end(), 0);
+    std::fill(ng_.begin(), ng_.end(), nGenConstr);
     for (size_t i = 0; i < d_lb_.size(); i++)
     {
         d_lb_[i].resize(nGenConstr, 1);

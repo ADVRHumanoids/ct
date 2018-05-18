@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -84,7 +83,7 @@ private:
     std::shared_ptr<LinearizedSystem> linearizedSystem_;
     std::shared_ptr<CostFunction> costFunction_;
 
-    optcon::OptConProblem<FBSystem::STATE_DIM, FBSystem::CONTROL_DIM> optConProblem_;
+    optcon::ContinuousOptConProblem<FBSystem::STATE_DIM, FBSystem::CONTROL_DIM> optConProblem_;
 
     std::shared_ptr<NLOptConSolver> solver_;
 

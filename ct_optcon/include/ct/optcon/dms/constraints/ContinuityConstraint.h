@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -49,7 +48,7 @@ public:
     /**
 	 * @brief      Default constructor
 	 */
-    ContinuityConstraint() {}
+    ContinuityConstraint() = default;
     /**
 	 * @brief      Custom constructor
 	 *
@@ -93,7 +92,7 @@ public:
     }
 
 
-    virtual VectorXs eval() override
+    VectorXs eval() override
     {
         stateNext_ = shotContainer_->getStateIntegrated();
         assert(stateNext_ == stateNext_);
@@ -101,7 +100,7 @@ public:
         return w_->getOptimizedState(shotIndex_ + 1) - stateNext_;
     }
 
-    virtual VectorXs evalSparseJacobian() override
+    VectorXs evalSparseJacobian() override
     {
         count_local_ = 0;
         switch (settings_.splineType_)
@@ -133,7 +132,7 @@ public:
         return jacLocal_;
     }
 
-    virtual size_t getNumNonZerosJacobian() override
+    size_t getNumNonZerosJacobian() override
     {
         size_t no = 0;
         switch (settings_.splineType_)
@@ -164,7 +163,7 @@ public:
     }
 
 
-    virtual void genSparsityPattern(Eigen::VectorXi& iRow_vec, Eigen::VectorXi& jCol_vec) override
+    void genSparsityPattern(Eigen::VectorXi& iRow_vec, Eigen::VectorXi& jCol_vec) override
     {
         size_t indexNumber = 0;
 
@@ -218,9 +217,9 @@ public:
         // }
     }
 
-    virtual VectorXs getLowerBound() override { return lb_; }
-    virtual VectorXs getUpperBound() override { return ub_; }
-    virtual size_t getConstraintSize() override { return STATE_DIM; }
+    VectorXs getLowerBound() override { return lb_; }
+    VectorXs getUpperBound() override { return ub_; }
+    size_t getConstraintSize() override { return STATE_DIM; }
 private:
     /**
 	 * @brief      Evaluates the sparse jacobian with respect to the discretized

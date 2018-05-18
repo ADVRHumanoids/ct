@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -44,6 +43,10 @@ TEST(LQRTest, DARETest)
 
     ct::optcon::DARE<stateDim, controlDim> dare;
     Eigen::Matrix<double, stateDim, stateDim> P = dare.computeSteadyStateRiccatiMatrix(Q, R, A, B, K, true);
+    Eigen::Matrix<double, stateDim, stateDim> P_test;
+    P_test << 6.932484752255643, 4.332273119899151, 4.332273119899151, 4.55195134961773;
+    ASSERT_LT((P - P_test).array().abs().maxCoeff(), 1e-12);
+
 }
 
 

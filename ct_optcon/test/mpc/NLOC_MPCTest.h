@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
  **********************************************************************************************************************/
 
@@ -49,7 +48,7 @@ TEST(MPCTestA, ForwardIntegratorTest)
         shared_ptr<CostFunctionQuadratic<state_dim, control_dim>> costFunction =
             tpl::createCostFunctionLinearOscillator<double>(x_final);
 
-        OptConProblem<state_dim, control_dim> optConProblem(system, costFunction, analyticLinearSystem);
+        ContinuousOptConProblem<state_dim, control_dim> optConProblem(system, costFunction, analyticLinearSystem);
         optConProblem.setInitialState(x0);
         optConProblem.setTimeHorizon(timeHorizon);
 
@@ -180,7 +179,7 @@ TEST(MPCTestB, NLOC_MPC_DoublePrecision)
             shared_ptr<CostFunctionQuadratic<state_dim, control_dim>> costFunction =
                 tpl::createCostFunctionLinearOscillator<double>(x_final);
 
-            OptConProblem<state_dim, control_dim> optConProblem(system, costFunction, analyticLinearSystem);
+            ContinuousOptConProblem<state_dim, control_dim> optConProblem(system, costFunction, analyticLinearSystem);
             optConProblem.setTimeHorizon(timeHorizon);
             optConProblem.setInitialState(x0);
 

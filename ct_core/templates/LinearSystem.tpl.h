@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -15,6 +14,9 @@ namespace NS2 {
 class LINEAR_SYSTEM_NAME : public ct::core::LinearSystem<STATE_DIM, CONTROL_DIM, SCALAR>
 {
 public:
+
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     typedef ct::core::LinearSystem<STATE_DIM, CONTROL_DIM, SCALAR> Base;
 
     typedef typename Base::state_vector_t state_vector_t;

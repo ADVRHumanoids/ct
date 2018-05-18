@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
  **********************************************************************************************************************/
 
@@ -174,6 +173,8 @@ void TermBase<STATE_DIM, CONTROL_DIM, SCALAR_EVAL, SCALAR>::loadTimeActivation(c
         }
     } catch (std::exception& e)
     {
+        if (verbose)
+            std::cout << "TermBase: encountered exception while loading TimeActivation." << std::endl;
         return;
     }
 }

@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -45,11 +44,11 @@ public:
     /**
 	 * @brief      Default constructor
 	 */
-    ConstraintDiscretizer() {}
+    ConstraintDiscretizer() = default;
     /**
 	 * @brief      Destructor
 	 */
-    virtual ~ConstraintDiscretizer() {}
+    ~ConstraintDiscretizer() override = default;
     /**
 	 * @brief      Custom constructor
 	 *
@@ -119,7 +118,7 @@ public:
         discreteJCol_.resize(nonZeroJacCount_);
     }
 
-    virtual VectorXs eval() override
+    VectorXs eval() override
     {
         size_t constraintSize = 0;
         size_t discreteInd = 0;
@@ -153,7 +152,7 @@ public:
         return discreteConstraints_;
     }
 
-    virtual VectorXs evalSparseJacobian() override
+    VectorXs evalSparseJacobian() override
     {
         size_t jacSize = 0;
         size_t discreteInd = 0;
@@ -201,8 +200,8 @@ public:
         return discreteJac_;
     }
 
-    virtual size_t getNumNonZerosJacobian() override { return nonZeroJacCount_; }
-    virtual void genSparsityPattern(Eigen::VectorXi& iRow_vec, Eigen::VectorXi& jCol_vec) override
+    size_t getNumNonZerosJacobian() override { return nonZeroJacCount_; }
+    void genSparsityPattern(Eigen::VectorXi& iRow_vec, Eigen::VectorXi& jCol_vec) override
     {
         size_t discreteInd = 0;
         size_t rowOffset = 0;
@@ -270,7 +269,7 @@ public:
         jCol_vec = discreteJCol_;
     }
 
-    virtual VectorXs getLowerBound() override
+    VectorXs getLowerBound() override
     {
         size_t discreteInd = 0;
         size_t constraintSize = 0;
@@ -301,7 +300,7 @@ public:
         return discreteLowerBound_;
     }
 
-    virtual VectorXs getUpperBound() override
+    VectorXs getUpperBound() override
     {
         size_t discreteInd = 0;
         size_t constraintSize = 0;
@@ -332,7 +331,7 @@ public:
         return discreteUpperBound_;
     }
 
-    virtual size_t getConstraintSize() override { return constraintsCount_; }
+    size_t getConstraintSize() override { return constraintsCount_; }
 private:
     std::shared_ptr<OptVectorDms<STATE_DIM, CONTROL_DIM, SCALAR>> w_;
     std::shared_ptr<SplinerBase<control_vector_t, SCALAR>> controlSpliner_;

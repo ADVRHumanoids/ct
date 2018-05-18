@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -42,6 +41,21 @@ public:
 
     //! the trivial constructor is explicitly forbidden
     TermTaskspacePose() {}
+    //! constructor taking a full RigidBodyPose
+    TermTaskspacePose(size_t eeInd,
+        const Eigen::Matrix<double, 3, 3>& Qpos,
+        const double& Qrot,
+        const ct::rbd::RigidBodyPose& rbdPose,
+        const std::string& name = "TermTaskSpace")
+        // delegate constructor
+        : TermTaskspacePose(eeInd,
+              Qpos,
+              Qrot,
+              rbdPose.position().toImplementation(),
+              rbdPose.getRotationQuaternion().toImplementation(),
+              name)
+    {
+    }
     //! constructor using a quaternion for orientation
     TermTaskspacePose(size_t eeInd,
         const Eigen::Matrix<double, 3, 3>& Qpos,
@@ -165,8 +179,17 @@ public:
     const Eigen::Matrix<double, 3, 1>& getReferencePosition() const { return w_p_ref_; }
     //! retrieve reference ee orientation in world frame
     const Eigen::Quaterniond getReferenceOrientation() const { return Eigen::Quaterniond(w_R_ref_); }
+    //! set the endeffector reference position
     void setReferencePosition(const Eigen::Matrix<double, 3, 1>& w_p_ref) { w_p_ref_ = w_p_ref; }
+    //! set the endeffector reference orientation
     void setReferenceOrientation(const Eigen::Matrix<double, 3, 3> w_R_ref) { w_R_ref_ = w_R_ref; }
+    //! return the reference pose as RigidBodyPose
+    const ct::rbd::RigidBodyPose getReferencePose() const
+    {
+        return ct::rbd::RigidBodyPose(getReferenceOrientation(), getReferencePosition());
+    }
+
+
 protected:
     /*!
      * setStateFromVector transforms your (custom) state vector x into a RBDState.

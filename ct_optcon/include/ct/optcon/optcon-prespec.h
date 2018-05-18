@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -10,13 +9,21 @@ Licensed under Apache2 license (see LICENSE file in main directory)
 #include <ct/core/core-prespec.h>
 
 #include "costfunction/costfunction.hpp"
-#include "costfunction/costfunction-impl.hpp"  //temporary solution
+#include "costfunction/costfunction-impl.hpp"  //temporary solution (todo)
+
+#include "filter/filter.h"
+#include "filter/filter-impl.h"  //temporary solution (todo)
 
 #include "constraint/constraint.h"
 
-#include "problem/OptConProblem.h"
+#include "problem/OptConProblemBase.h"
+#include "problem/ContinuousOptConProblem.h"
+#include "problem/DiscreteOptConProblem.h"
 #include "problem/LQOCProblem.hpp"
-#include "solver/OptConSolver.h"
+
+#include "system_interface/OptconSystemInterface.h"
+#include "system_interface/OptconContinuousSystemInterface.h"
+#include "system_interface/OptconDiscreteSystemInterface.h"
 
 #include "nloc/NLOCBackendBase.hpp"
 #include "nloc/NLOCBackendST.hpp"
@@ -24,6 +31,7 @@ Licensed under Apache2 license (see LICENSE file in main directory)
 #include "nloc/algorithms/gnms/GNMS.hpp"
 #include "nloc/algorithms/ilqr/iLQR.hpp"
 
+#include "solver/OptConSolver.h"
 #include "solver/lqp/HPIPMInterface.hpp"
 #include "solver/lqp/GNRiccatiSolver.hpp"
 #include "solver/NLOptConSolver.hpp"

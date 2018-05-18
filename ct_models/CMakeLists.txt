@@ -27,8 +27,10 @@ if(BUILD_HYQ_FULL)
 endif(BUILD_HYQ_FULL)
 
 ## assemble list of libraries that contain prespecified templates
-ct_configure_explicit_templates("${CMAKE_CURRENT_SOURCE_DIR}/../ct/config/explicit_templates.cfg" "${CMAKE_CURRENT_SOURCE_DIR}/prespec/" "ct_models")
-message(WARNING "CT Models: Compiling the following explict template libraries: ${PRESPEC_LIB_NAMES}")
+if(USE_PRESPEC)
+    ct_configure_explicit_templates("${CMAKE_CURRENT_SOURCE_DIR}/../ct/config/explicit_templates.cfg" "${CMAKE_CURRENT_SOURCE_DIR}/prespec/" "ct_models")
+    message(WARNING "CT Models: Compiling the following explict template libraries: ${PRESPEC_LIB_NAMES}")
+endif(USE_PRESPEC)
 
 catkin_package(
   INCLUDE_DIRS
@@ -51,7 +53,9 @@ set(HYQ_CODEGEN_OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include/ct/models/HyQ/co
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/ct/models/CodegenOutputDirs.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/ct/models/CodegenOutputDirs.h)
 
 # add libraries for explicit template
-ct_add_explicit_template_libs()
+if(USE_PRESPEC)
+    ct_add_explicit_template_libs()
+endif(USE_PRESPEC)
 
 ################ HyQ #################
 if(CPPAD_ENABLED)
@@ -195,7 +199,7 @@ if(BUILD_EXAMPLES)
     set(CT_MODELS_EXAMPLE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/examples")
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/examples/exampleDir.h.in ${CMAKE_CURRENT_SOURCE_DIR}/examples/exampleDir.h)
 
-    add_executable(ex_NLOC_MPC_invertedPendulum examples/InvertedPendulum/NLOC_MPC.cpp)
+    add_executable(ex_NLOC_MPC_invertedPendulum examples/mpc/InvertedPendulum/NLOC_MPC.cpp)
     target_link_libraries(ex_NLOC_MPC_invertedPendulum ${catkin_LIBRARIES})
 endif()
 

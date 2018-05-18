@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -25,6 +24,9 @@ class LinearSystem : public ControlledSystem<STATE_DIM, CONTROL_DIM, SCALAR>
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    typedef ControlledSystem<STATE_DIM, CONTROL_DIM, SCALAR> Base;
+    typedef typename Base::time_t time_t;
 
     typedef StateVector<STATE_DIM, SCALAR> state_vector_t;        //!< state vector type
     typedef ControlVector<CONTROL_DIM, SCALAR> control_vector_t;  //!< input vector type
@@ -59,7 +61,7 @@ public:
 	 * @param derivative state derivative
 	 */
     virtual void computeControlledDynamics(const state_vector_t& state,
-        const SCALAR& t,
+        const time_t& t,
         const control_vector_t& control,
         state_vector_t& derivative) override
     {
@@ -77,7 +79,7 @@ public:
 	 */
     virtual const state_matrix_t& getDerivativeState(const state_vector_t& x,
         const control_vector_t& u,
-        const SCALAR t = SCALAR(0.0)) = 0;
+        const time_t t = time_t(0.0)) = 0;
 
     //! get the B matrix of a linear system
     /*!
@@ -88,7 +90,7 @@ public:
 	 */
     virtual const state_control_matrix_t& getDerivativeControl(const state_vector_t& x,
         const control_vector_t& u,
-        const SCALAR t = SCALAR(0.0)) = 0;
+        const time_t t = time_t(0.0)) = 0;
 };
 }
 }

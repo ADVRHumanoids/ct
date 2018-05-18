@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -172,7 +171,7 @@ public:
     {
         try
         {
-            base().pose().setFromRotationQuaternion(kindr::RotationQuaternionD(state.template head<4>()));
+            base().pose().setFromRotationQuaternion(kindr::RotationQuaternion<SCALAR>(state.template head<4>()));
             base().pose().position().toImplementation() = state.template segment<3>(4);
             joints().getPositions() = state.template segment<NJOINTS>(7);
             base().velocities().getRotationalVelocity().toImplementation() = state.template segment<3>(7 + NJOINTS);

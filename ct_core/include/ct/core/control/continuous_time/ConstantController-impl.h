@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -48,6 +47,14 @@ void ConstantController<STATE_DIM, CONTROL_DIM, SCALAR>::computeControl(const St
 }
 
 template <size_t STATE_DIM, size_t CONTROL_DIM, typename SCALAR>
+void ConstantController<STATE_DIM, CONTROL_DIM, SCALAR>::computeControl(const StateVector<STATE_DIM, SCALAR>& state,
+    const int n,
+    ControlVector<CONTROL_DIM, SCALAR>& controlAction)
+{
+    computeControl(state, SCALAR(n), controlAction);
+}
+
+template <size_t STATE_DIM, size_t CONTROL_DIM, typename SCALAR>
 void ConstantController<STATE_DIM, CONTROL_DIM, SCALAR>::setControl(const ControlVector<CONTROL_DIM, SCALAR>& u)
 {
     u_ = u;
@@ -66,5 +73,5 @@ ControlMatrix<CONTROL_DIM, SCALAR> ConstantController<STATE_DIM, CONTROL_DIM, SC
 {
     return ControlMatrix<CONTROL_DIM, SCALAR>::Identity();
 }
-}
-}
+}  // namespace core
+}  // namespace ct

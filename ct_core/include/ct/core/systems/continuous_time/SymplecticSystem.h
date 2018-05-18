@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -28,6 +27,7 @@ class SymplecticSystem : public ControlledSystem<POS_DIM + VEL_DIM, CONTROL_DIM,
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     typedef ControlledSystem<POS_DIM + VEL_DIM, CONTROL_DIM, SCALAR> Base;
+    typedef typename Base::time_t time_t;
 
     /**
 	 * @brief      Constructor
@@ -66,7 +66,7 @@ public:
 
     virtual bool isSymplectic() const override { return true; }
     virtual void computeControlledDynamics(const StateVector<POS_DIM + VEL_DIM, SCALAR>& state,
-        const SCALAR& t,
+        const time_t& t,
         const ControlVector<CONTROL_DIM, SCALAR>& control,
         StateVector<POS_DIM + VEL_DIM, SCALAR>& derivative) override
     {

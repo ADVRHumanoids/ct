@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
  **********************************************************************************************************************/
 
@@ -8,7 +7,7 @@ Licensed under Apache2 license (see LICENSE file in main directory)
 
 #include <type_traits>
 
-#include <ct/optcon/problem/OptConProblem.h>
+#include <ct/optcon/problem/ContinuousOptConProblem.h>
 #include <ct/optcon/solver/OptConSolver.h>
 
 #include "MpcSettings.h"
@@ -67,7 +66,7 @@ public:
     typedef typename OPTCON_SOLVER::Scalar_t Scalar_t;
     typedef typename OPTCON_SOLVER::Policy_t Policy_t;
 
-    typedef OptConProblem<STATE_DIM, CONTROL_DIM, Scalar_t> OptConProblem_t;
+    typedef ContinuousOptConProblem<STATE_DIM, CONTROL_DIM, Scalar_t> OptConProblem_t;
 
 
     //! MPC solver constructor

@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -26,15 +25,6 @@ ConstraintsContainerDms<STATE_DIM, CONTROL_DIM, SCALAR>::ConstraintsContainerDms
                 new ContinuityConstraint<STATE_DIM, CONTROL_DIM, SCALAR>(shotContainers[shotNr], w, shotNr, settings));
 
         this->constraints_.push_back(c_i);
-    }
-
-    if (settings_.objectiveType_ == DmsSettings::OPTIMIZE_GRID)
-    {
-        std::shared_ptr<TimeHorizonEqualityConstraint<STATE_DIM, CONTROL_DIM, SCALAR>> c_horizon_equal =
-            std::shared_ptr<TimeHorizonEqualityConstraint<STATE_DIM, CONTROL_DIM, SCALAR>>(
-                new TimeHorizonEqualityConstraint<STATE_DIM, CONTROL_DIM, SCALAR>(w, timeGrid, settings));
-
-        this->constraints_.push_back(c_horizon_equal);
     }
 
     if (discretizedConstraints)

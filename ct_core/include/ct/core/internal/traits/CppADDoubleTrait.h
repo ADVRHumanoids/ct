@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -26,6 +25,8 @@ struct CppADDoubleTrait
     inline static Scalar tanh(const Scalar& x) { return CppAD::tanh(x); }
     inline static Scalar exp(const Scalar& x) { return CppAD::exp(x); }
     inline static Scalar fabs(const Scalar& x) { return CppAD::fabs(x); }
+    inline static Scalar sqrt(const Scalar& x) { return CppAD::sqrt(x); }
+
     //! Solves a linear system of equations using Eigen's inverse functionality
     template <int Dims>
     inline static Eigen::Matrix<Scalar, Dims, 1> solve(const Eigen::Matrix<Scalar, Dims, Dims>& A,
@@ -34,6 +35,6 @@ struct CppADDoubleTrait
         return A.inverse() * b;
     }
 };
-}
-}
-}
+}  // namespace internal
+}  // namespace core
+}  // namespace ct
