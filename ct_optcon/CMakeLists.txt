@@ -217,10 +217,10 @@ if(BUILD_EXAMPLES)
     if(CPPAD_ENABLED)
       add_executable(ex_NLOC_MPC examples/NLOC_MPC.cpp)
       target_link_libraries(ex_NLOC_MPC ${catkin_LIBRARIES} ${HPIPM_LIBS} ${MATLAB_LIBS})
-      
+
       add_executable(ex_LQR examples/LQR.cpp)
       target_link_libraries(ex_LQR ${catkin_LIBRARIES} ${LAPACK_LIBS})
-      
+
       add_executable(ex_DMS examples/DMS.cpp)
       target_link_libraries(ex_DMS ${catkin_LIBRARIES} ${NLP_LIBS})
     endif(CPPAD_ENABLED)
@@ -239,8 +239,6 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}/test/dms/oscillator)
 
 catkin_add_gtest(LqrTest test/lqr/LqrTest.cpp)
 target_link_libraries(LqrTest ${catkin_LIBRARIES} ${LAPACK_LIBS} ${MATLAB_LIBS})
-catkin_add_gtest(LqrTestPrespec test/lqr/LqrTestPrespec.cpp)
-target_link_libraries(LqrTestPrespec ${catkin_LIBRARIES} ${LAPACK_LIBS} ${MATLAB_LIBS} ${PRESPEC_LIB_NAMES})
 
 catkin_add_gtest(iLQRTest test/nloc/iLQRTest.cpp)
 target_link_libraries(iLQRTest ${catkin_LIBRARIES} ${MATLAB_LIBS} ${HPIPM_LIBS})
@@ -304,13 +302,13 @@ if(CPPAD_ENABLED)
   get_filename_component(DMS_OSC_TEST_MAT_DIR "test/dms/oscillator/matfiles" ABSOLUTE)
   configure_file(test/dms/oscillator/oscDMSTest_settings.h.in test/dms/oscillator/oscDMSTest_settings.h)
   include_directories(${CMAKE_CURRENT_BINARY_DIR}/test/dms/oscillator)
-  
+
   catkin_add_gtest(dms_test test/dms/oscillator/oscDMSTest.cpp)
   target_link_libraries(dms_test ${catkin_LIBRARIES} ${MATLAB_LIBS} ${NLP_LIBS})
-  
+
   catkin_add_gtest(dms_test_all_var test/dms/oscillator/oscDMSTestAllVariants.cpp)
   target_link_libraries(dms_test_all_var ${catkin_LIBRARIES} ${MATLAB_LIBS} ${NLP_LIBS})
-  
+
   add_executable(matFilesGenerator test/dms/oscillator/matfiles/matFilesGenerator.cpp)
   target_link_libraries(matFilesGenerator ${catkin_LIBRARIES} ${MATLAB_LIBS} ${NLP_LIBS})
 endif(CPPAD_ENABLED)
