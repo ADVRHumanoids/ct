@@ -44,9 +44,7 @@ void NLOCBackendST<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::co
 
     for (size_t k = firstIndex; k <= lastIndex; k++)
     {
-        this->computeLinearizedDynamics(this->settings_.nThreads, k);
-
-        this->computeQuadraticCosts(this->settings_.nThreads, k);
+        this->executeLQApproximation(this->settings_.nThreads, k);
 
         if (this->generalConstraints_[this->settings_.nThreads] != nullptr)
             this->computeLinearizedConstraints(this->settings_.nThreads, k);
@@ -57,13 +55,13 @@ template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, type
 void NLOCBackendST<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::rolloutShots(size_t firstIndex,
     size_t lastIndex)
 {
-    for (size_t k = firstIndex; k <= lastIndex; k = k + this->settings_.K_shot)
+    for (size_t k = firstIndex; k <= lastIndex; k = k + this->getNumStepsPerShot())
     {
         // rollout the shot
         this->rolloutSingleShot(this->settings_.nThreads, k, this->u_ff_, this->x_, this->x_, this->xShot_,
             *this->substepsX_, *this->substepsU_);
 
-        this->computeSingleDefect(k, this->x_, this->xShot_, this->lqocProblem_->b_);
+        this->computeSingleDefect(k, this->x_, this->xShot_, this->d_);
     }
 }
 
@@ -106,30 +104,11 @@ SCALAR NLOCBackendST<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
         typename Base::ControlSubstepsPtr substepsU =
             typename Base::ControlSubstepsPtr(new typename Base::ControlSubsteps(this->K_ + 1));
 
-        // set init state
-        x_search[0] = this->x_[0];
 
+        this->executeLineSearch(this->settings_.nThreads, alpha, this->lqocSolver_->getSolutionControl(),
+            this->lqocSolver_->getSolutionState(), x_search, x_shot_search, defects_recorded, u_recorded,
+            intermediateCost, finalCost, defectNorm, e_box_norm, e_gen_norm, *substepsX, *substepsU);
 
-        switch (this->settings_.nlocp_algorithm)
-        {
-            case NLOptConSettings::NLOCP_ALGORITHM::GNMS:
-            {
-                this->executeLineSearchMultipleShooting(this->settings_.nThreads, alpha, this->lu_, this->lx_, x_search,
-                    x_shot_search, defects_recorded, u_recorded, intermediateCost, finalCost, defectNorm, e_box_norm,
-                    e_gen_norm, *substepsX, *substepsU);
-
-                break;
-            }
-            case NLOptConSettings::NLOCP_ALGORITHM::ILQR:
-            {
-                defectNorm = 0.0;
-                this->executeLineSearchSingleShooting(this->settings_.nThreads, alpha, x_search, u_recorded,
-                    intermediateCost, finalCost, e_box_norm, e_gen_norm, *substepsX, *substepsU);
-                break;
-            }
-            default:
-                throw std::runtime_error("Algorithm type unknown in performLineSearch()!");
-        }
 
         // compute merit
         cost = intermediateCost + finalCost + this->settings_.meritFunctionRho * defectNorm +
@@ -166,27 +145,12 @@ SCALAR NLOCBackendST<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
                 std::cout << "[LineSearch]: Merit:\t" << cost << std::endl;
             }
 
-
-            if (this->settings_.printSummary)
-            {
-                this->lu_norm_ =
-                    this->template computeDiscreteArrayNorm<ct::core::ControlVectorArray<CONTROL_DIM, SCALAR>, 2>(
-                        u_recorded, this->u_ff_prev_);
-                this->lx_norm_ =
-                    this->template computeDiscreteArrayNorm<ct::core::StateVectorArray<STATE_DIM, SCALAR>, 2>(
-                        x_search, this->x_prev_);
-            }
-            else
-            {
-#ifdef MATLAB
-                this->lu_norm_ =
-                    this->template computeDiscreteArrayNorm<ct::core::ControlVectorArray<CONTROL_DIM, SCALAR>, 2>(
-                        u_recorded, this->u_ff_prev_);
-                this->lx_norm_ =
-                    this->template computeDiscreteArrayNorm<ct::core::StateVectorArray<STATE_DIM, SCALAR>, 2>(
-                        x_search, this->x_prev_);
-#endif
-            }
+            // compute update norms separately, as they are typically different from pure lqoc solver updates
+            this->lu_norm_ =
+                this->template computeDiscreteArrayNorm<ct::core::ControlVectorArray<CONTROL_DIM, SCALAR>, 2>(
+                    u_recorded, this->u_ff_prev_);
+            this->lx_norm_ = this->template computeDiscreteArrayNorm<ct::core::StateVectorArray<STATE_DIM, SCALAR>, 2>(
+                x_search, this->x_prev_);
 
             alphaBest = alpha;
             this->intermediateCostBest_ = intermediateCost;
@@ -199,7 +163,7 @@ SCALAR NLOCBackendST<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
             this->x_.swap(x_search);
             this->xShot_.swap(x_shot_search);
             this->u_ff_.swap(u_recorded);
-            this->lqocProblem_->b_.swap(defects_recorded);
+            this->d_.swap(defects_recorded);
             this->substepsX_ = substepsX;
             this->substepsU_ = substepsU;
             break;

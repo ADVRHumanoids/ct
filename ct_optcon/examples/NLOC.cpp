@@ -6,6 +6,7 @@
  * them to a simple second-order oscillator.
  *
  */
+
 #include <ct/optcon/optcon.h>
 #include "exampleDir.h"
 #include "plotResultsOscillator.h"
@@ -14,7 +15,7 @@ using namespace ct::core;
 using namespace ct::optcon;
 
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     /*get the state and control input dimension of the oscillator. Since we're dealing with a simple oscillator,
 	 the state and control dimensions will be state_dim = 2, and control_dim = 1. */
@@ -81,16 +82,7 @@ int main(int argc, char **argv)
 	 * linear quadratic regulator, iLQR, for this example. In the following, we
 	 * modify only a few settings, for more detail, check out the NLOptConSettings class. */
     NLOptConSettings ilqr_settings;
-    ilqr_settings.dt = 0.01;  // the control discretization in [sec]
-    ilqr_settings.integrator = ct::core::IntegrationType::EULERCT;
-    ilqr_settings.discretization = NLOptConSettings::APPROXIMATION::FORWARD_EULER;
-    ilqr_settings.max_iterations = 10;
-    ilqr_settings.nThreads = 4;  // use multi-threading
-    ilqr_settings.nlocp_algorithm = NLOptConSettings::NLOCP_ALGORITHM::ILQR;
-    ilqr_settings.lqocp_solver =
-        NLOptConSettings::LQOCP_SOLVER::GNRICCATI_SOLVER;  // solve LQ-problems using custom Riccati solver
-    ilqr_settings.printSummary = true;
-    ilqr_settings.debugPrint = true;
+    ilqr_settings.load(ct::optcon::exampleDir + "/nlocSolver.info", true, "ilqr");
 
 
     /* STEP 2-B: provide an initial guess */

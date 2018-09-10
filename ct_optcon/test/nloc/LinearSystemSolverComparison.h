@@ -22,16 +22,10 @@ using std::shared_ptr;
 
 
 /*!
- * This unit test considers a variety of different solver/algorithm options for NLOC,
- * combined with a linear system. We check if the optimization converges within 1 iteration.
- *
- * \example LinearSystemTest.h
- *
- * \note visit the tutorial for a more intuitive example.
- *
- * \warning The HPIPM solver is not included in this unit test.
+ * This unit test considers a variety of different solver/algorithm options for NLOC, and
+ * explicitly compares HPIPM and GNRiccati solvers against each other.
  */
-TEST(LinearSystemsTest, NLOCSolverTest)
+TEST(LinearSystemsSolverComparison, LinearSystemsSolverComparison)
 {
     typedef NLOptConSolver<state_dim, control_dim, state_dim / 2, state_dim / 2> NLOptConSolver;
 
@@ -54,7 +48,6 @@ TEST(LinearSystemsTest, NLOCSolverTest)
     nloc_settings.fixedHessianCorrection = false;
     nloc_settings.dt = 0.01;
     nloc_settings.discretization = NLOptConSettings::APPROXIMATION::FORWARD_EULER;  // default approximation
-    nloc_settings.lqocp_solver = NLOptConSettings::LQOCP_SOLVER::GNRICCATI_SOLVER;
     nloc_settings.printSummary = false;
 
     // loop through all solver classes
@@ -112,8 +105,6 @@ TEST(LinearSystemsTest, NLOCSolverTest)
                                     else
                                         continue;  // proceed to next test case
 
-                                    //                                  nloc_settings.print();
-
                                     shared_ptr<ControlledSystem<state_dim, control_dim>> nonlinearSystem(
                                         new LinearOscillator());
                                     shared_ptr<LinearSystem<state_dim, control_dim>> analyticLinearSystem(
@@ -137,29 +128,49 @@ TEST(LinearSystemsTest, NLOCSolverTest)
 
                                     NLOptConSolver::Policy_t initController(x0, u0, u0_fb, nloc_settings.dt);
 
-                                    // construct single-core single subsystem OptCon Problem
+                                    // construct OptCon Problem
                                     ContinuousOptConProblem<state_dim, control_dim> optConProblem(
                                         tf, x0[0], nonlinearSystem, costFunction, analyticLinearSystem);
 
-
-                                    NLOptConSolver solver(optConProblem, nloc_settings);
-                                    solver.configure(nloc_settings);
-                                    solver.setInitialGuess(initController);
-
+                                    // NLOC solver employing GNRiccati
+                                    nloc_settings.lqocp_solver = NLOptConSettings::LQOCP_SOLVER::GNRICCATI_SOLVER;
+                                    NLOptConSolver solver_gnriccati(optConProblem, nloc_settings);
+                                    solver_gnriccati.configure(nloc_settings);
+                                    solver_gnriccati.setInitialGuess(initController);
                                     //! run two iterations to solve LQ problem
-                                    solver.runIteration();  // only this one should be required to solve LQ problem
-                                    solver.runIteration();
-                                    //! retrieve summary of the optimization
-                                    const SummaryAllIterations<double>& summary = solver.getBackend()->getSummary();
-                                    //! check that the policy improved in the first iteration
-                                    ASSERT_GT(summary.lx_norms.front(), 1e-9);
-                                    ASSERT_GT(summary.lu_norms.front(), 1e-9);
+                                    solver_gnriccati.runIteration();
+                                    solver_gnriccati.runIteration();
 
-                                    //! check that we are converged after the first iteration
-                                    ASSERT_LT(summary.lx_norms.back(), 1e-10);
-                                    ASSERT_LT(summary.lu_norms.back(), 1e-10);
-                                    ASSERT_LT(summary.defect_l1_norms.back(), 1e-10);
-                                    ASSERT_LT(summary.defect_l2_norms.back(), 1e-10);
+
+                                    // NLOC solver employing HPIPM
+                                    nloc_settings.lqocp_solver = NLOptConSettings::LQOCP_SOLVER::HPIPM_SOLVER;
+                                    NLOptConSolver solver_hpipm(optConProblem, nloc_settings);
+                                    solver_hpipm.configure(nloc_settings);
+                                    solver_hpipm.setInitialGuess(initController);
+                                    //! run two iterations to solve LQ problem
+                                    solver_hpipm.runIteration();
+                                    solver_hpipm.runIteration();
+
+                                    //! retrieve summaries
+                                    const SummaryAllIterations<double>& sumGn =
+                                        solver_gnriccati.getBackend()->getSummary();
+                                    const SummaryAllIterations<double>& sumHpipm =
+                                        solver_hpipm.getBackend()->getSummary();
+
+                                    //! check that all logs from both solvers are identical
+                                    // first iteration
+                                    ASSERT_NEAR(sumGn.lx_norms.back(), sumHpipm.lx_norms.back(), 1e-6);
+                                    ASSERT_NEAR(sumGn.lu_norms.back(), sumHpipm.lu_norms.back(), 1e-6);
+                                    ASSERT_NEAR(sumGn.defect_l1_norms.back(), sumHpipm.defect_l1_norms.back(), 1e-6);
+                                    ASSERT_NEAR(sumGn.defect_l2_norms.back(), sumHpipm.defect_l2_norms.back(), 1e-6);
+                                    ASSERT_NEAR(sumGn.merits.back(), sumHpipm.merits.back(), 1e-6);
+
+                                    // second iteration
+                                    ASSERT_NEAR(sumGn.lx_norms.front(), sumHpipm.lx_norms.front(), 1e-6);
+                                    ASSERT_NEAR(sumGn.lu_norms.front(), sumHpipm.lu_norms.front(), 1e-6);
+                                    ASSERT_NEAR(sumGn.defect_l1_norms.front(), sumHpipm.defect_l1_norms.front(), 1e-6);
+                                    ASSERT_NEAR(sumGn.defect_l2_norms.front(), sumHpipm.defect_l2_norms.front(), 1e-6);
+                                    ASSERT_NEAR(sumGn.merits.front(), sumHpipm.merits.front(), 1e-6);
 
                                     testCounter++;
 

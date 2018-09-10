@@ -31,8 +31,7 @@ template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, type
 NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::NLOCBackendBase(
     const systemInterfacePtr_t& systemInterface,
     const Settings_t& settings)
-    : systemInterface_(systemInterface),
-      initialized_(false),
+    : initialized_(false),
       configured_(false),
       iteration_(0),
       settings_(settings),
@@ -46,6 +45,8 @@ NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::NLOCB
 
       substepsX_(new StateSubsteps),
       substepsU_(new ControlSubsteps),
+
+      systemInterface_(systemInterface),
 
       intermediateCostBest_(std::numeric_limits<SCALAR>::infinity()),
       finalCostBest_(std::numeric_limits<SCALAR>::infinity()),
@@ -75,7 +76,6 @@ NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::NLOCB
         changeGeneralConstraints(systemInterface_->getOptConProblem().getGeneralConstraints());
 }
 
-
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
 NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::NLOCBackendBase(
     const systemInterfacePtr_t& systemInterface,
@@ -85,7 +85,6 @@ NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::NLOCB
     : NLOCBackendBase(systemInterface, Settings_t::fromConfigFile(settingsFile, verbose, ns))
 {
 }
-
 
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
 NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::~NLOCBackendBase()
@@ -115,7 +114,6 @@ NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::creat
     return systemInterfacePtr_t(
         new OptconDiscreteSystemInterface<STATE_DIM, CONTROL_DIM, SCALAR>(optConProblem, settings));
 }
-
 
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
 void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::setInitialGuess(
@@ -180,7 +178,6 @@ void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
     finalCostPrevious_ = finalCostBest_;
 }
 
-
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
 void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::changeTimeHorizon(int numStages)
 {
@@ -194,18 +191,19 @@ void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
 
     t_ = TimeArray(settings_.dt, K_ + 1, 0.0);
 
-    lx_.resize(K_ + 1);
     x_.resize(K_ + 1);
     x_prev_.resize(K_ + 1);
     xShot_.resize(K_ + 1);
 
-    lu_.resize(K_);
     u_ff_.resize(K_);
     u_ff_prev_.resize(K_);
+    d_.resize(K_ + 1);
     L_.resize(K_);
 
     substepsX_->resize(K_ + 1);
     substepsU_->resize(K_ + 1);
+
+    resetDefects();
 
     systemInterface_->changeNumStages(K_);
 
@@ -223,7 +221,6 @@ void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
 
     changeTimeHorizon(settings_.computeK(tf));
 }
-
 
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
 void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::changeInitialState(
@@ -342,7 +339,6 @@ void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
     }
 }
 
-
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
 void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::configure(const Settings_t& settings)
 {
@@ -394,74 +390,6 @@ void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
     configured_ = true;
 }
 
-
-/*
-template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
-bool NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::simpleRollout(
-		const size_t threadId,
-		const ControlVectorArray& uff,
-		const StateVectorArray& x_ref_lqr,
-		StateVectorArray& x_local,
-		ControlVectorArray& u_recorded
-		)const
-{
-	const double& dt = settings_.dt;
-	const double dt_sim = settings_.getSimulationTimestep();
-	const size_t subSteps = settings_.K_sim;
-	const int K_local = K_;
-
-	u_recorded.clear();
-
-	x_local.resize(K_+1);
-	x_local.front() = x_ref_lqr.front();
-
-	if(uff.size() < (size_t)K_) throw std::runtime_error("simpleRollout: u_local is too short.");
-
-
-	for (int i = 1; i<K_local+1; i++)
-	{
-		x_local[i] = x_local[i-1];
-
-		u_recorded.push_back(uff[i-1] + L_[i-1] * (x_local[i-1] - x_ref_lqr[i-1]));
-
-		controller_[threadId]->setControl(u_recorded.back());
-
-
-		if(settings_.integrator == ct::core::IntegrationType::EULER_SYM || settings_.integrator == ct::core::IntegrationType::RK_SYM)
-		{
-			integrateSymplectic<V_DIM, P_DIM, STATE_DIM>(threadId, x_local[i], 0, subSteps, dt_sim);
-		} else
-		{
-			integrators_[threadId]->integrate_n_steps(x_local[i], 0, subSteps, dt_sim);
-		}
-
-
-		// check if nan
-		for (size_t k=0; k<STATE_DIM; k++)
-		{
-			if (isnan(x_local[i](k)))
-			{
-				x_local.resize(K_local+1, ct::core::StateVector<STATE_DIM, SCALAR>::Constant(std::numeric_limits<SCALAR>::quiet_NaN()));
-				u_recorded.resize(K_local, ct::core::ControlVector<CONTROL_DIM, SCALAR>::Constant(std::numeric_limits<SCALAR>::quiet_NaN()));
-				return false;
-			}
-		}
-		for (size_t k=0; k<CONTROL_DIM; k++)
-		{
-			if (isnan(u_recorded.back()(k)))
-			{
-				x_local.resize(K_local+1, ct::core::StateVector<STATE_DIM, SCALAR>::Constant(std::numeric_limits<SCALAR>::quiet_NaN()));
-				u_recorded.resize(K_local, ct::core::ControlVector<CONTROL_DIM, SCALAR>::Constant(std::numeric_limits<SCALAR>::quiet_NaN()));
-				std::cout << "control unstable" << std::endl;
-				return false;
-			}
-		}
-	}
-	return true;
-}
-*/
-
-
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
 bool NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::rolloutSingleShot(const size_t threadId,
     const size_t k,  //! the starting index of the shot
@@ -485,12 +413,9 @@ bool NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
     xShot[k] = x_local[k];  // initialize
 
     //! determine index where to stop at the latest
-    int K_stop = k + settings_.K_shot;
+    int K_stop = k + getNumStepsPerShot();
     if (K_stop > K_local)
         K_stop = K_local;
-
-    if (settings_.nlocp_algorithm == NLOptConSettings::NLOCP_ALGORITHM::ILQR)
-        K_stop = K_local;  //! @todo this is not elegant - need to improve.
 
     // for each control step
     for (int i = (int)k; i < K_stop; i++)
@@ -565,15 +490,17 @@ bool NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
     StateVectorArray& xShot,
     StateVectorArray& d,
     StateSubsteps& substepsX,
-    ControlSubsteps& substepsU) const
+    ControlSubsteps& substepsU,
+    std::atomic_bool* terminationFlag) const
 {
     //! make sure all intermediate entries in the defect trajectory are zero
     d.setConstant(state_vector_t::Zero());
 
-    for (size_t k = firstIndex; k <= lastIndex; k = k + settings_.K_shot)
+    for (size_t k = firstIndex; k <= lastIndex; k = k + getNumStepsPerShot())
     {
         // first rollout the shot
-        bool dynamicsGood = rolloutSingleShot(threadId, k, u_ff_local, x_local, x_ref_lqr, xShot, substepsX, substepsU);
+        bool dynamicsGood = rolloutSingleShot(
+            threadId, k, u_ff_local, x_local, x_ref_lqr, xShot, substepsX, substepsU, terminationFlag);
 
         if (!dynamicsGood)
             return false;
@@ -583,7 +510,6 @@ bool NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
     }
     return true;
 }
-
 
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
 void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::computeSingleDefect(size_t k,
@@ -600,7 +526,6 @@ void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
     }
     //! else ... all other entries of d remain zero.
 }
-
 
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
 void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::computeCostsOfTrajectory(
@@ -625,7 +550,6 @@ void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
     costFunctions_[threadId]->setCurrentStateAndControl(x_local[K_], control_vector_t::Zero(), settings_.dt * K_);
     finalCost = costFunctions_[threadId]->evaluateTerminal();
 }
-
 
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
 void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::computeBoxConstraintErrorOfTrajectory(
@@ -666,7 +590,6 @@ void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
     }
 }
 
-
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
 void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
     computeGeneralConstraintErrorOfTrajectory(size_t threadId,
@@ -706,33 +629,55 @@ void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
     }
 }
 
-
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
-void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::computeLinearizedDynamics(
-    size_t threadId,
+void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::executeLQApproximation(size_t threadId,
     size_t k)
 {
     LQOCProblem_t& p = *lqocProblem_;
-
-    /*!
-     * @todo
-     * Note the little 'hack' that is applied here. We need a control input to linearize around for the last stage N.
-     * Should it be zero? We currently set it to be the second-to-last control input.
-     */
-    const core::ControlVector<CONTROL_DIM, SCALAR> u_last = u_ff_[std::min((int)k + 1, K_ - 1)];
+    const scalar_t& dt = settings_.dt;
 
     assert(lqocProblem_ != nullptr);
 
     assert(&lqocProblem_->A_[k] != nullptr);
     assert(&lqocProblem_->B_[k] != nullptr);
+    assert(&lqocProblem_->b_[k] != nullptr);
 
     assert(lqocProblem_->A_.size() > k);
     assert(lqocProblem_->B_.size() > k);
+    assert(lqocProblem_->b_.size() > k);
 
+
+    //! @warning it is important that the calculations are done with local variables x_ and u_ff_, they will only later be stored in the LQOCProblem
+    // compute A_n and B_n
     systemInterface_->setSubstepTrajectoryReference(substepsX_, substepsU_, threadId);
     systemInterface_->getAandB(x_[k], u_ff_[k], xShot_[k], (int)k, settings_.K_sim, p.A_[k], p.B_[k], threadId);
-}
 
+    // compute dynamics offset term b_n
+    p.b_[k] = d_[k] + x_[k + 1] - p.A_[k] * x_[k] - p.B_[k] * u_ff_[k];
+
+    // feed current state and control to cost function
+    costFunctions_[threadId]->setCurrentStateAndControl(x_[k], u_ff_[k], dt * k);
+
+    // By using the following order of evaluations, we avoid caching matrices
+    // second derivative w.r.t state
+    p.Q_[k] = costFunctions_[threadId]->stateSecondDerivativeIntermediate() * dt;
+    // second derivative w.r.t control
+    p.R_[k] = costFunctions_[threadId]->controlSecondDerivativeIntermediate() * dt;
+    // cross terms
+    p.P_[k] = costFunctions_[threadId]->stateControlDerivativeIntermediate() * dt;
+
+    // derivative of cost with respect to state
+    p.qv_[k] =
+        costFunctions_[threadId]->stateDerivativeIntermediate() * dt - p.Q_[k] * x_[k] - p.P_[k].transpose() * u_ff_[k];
+    // derivative of cost with respect to control
+    p.rv_[k] = costFunctions_[threadId]->controlDerivativeIntermediate() * dt - p.R_[k] * u_ff_[k] - p.P_[k] * x_[k];
+
+    // p.q_[k] = ... // not evaluated since we don't need it in GNMS/iLQR -- WARNING, potentially implement when using a different QP solver
+
+    // set current reference trajectories x_n and u_n
+    p.x_[k] = x_[k];
+    p.u_[k] = u_ff_[k];
+}
 
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
 void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::setBoxConstraintsForLQOCProblem()
@@ -775,7 +720,6 @@ void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
     }
 }
 
-
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
 void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::computeLinearizedConstraints(
     size_t threadId,
@@ -799,7 +743,7 @@ void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
 
             Eigen::Matrix<SCALAR, Eigen::Dynamic, 1> g_eval = generalConstraints_[threadId]->evaluateIntermediate();
 
-            // rewrite constraint in absolute coordinates as required by LQOC problem
+            // rewrite constraint boundaries in absolute coordinates as required by LQOC problem
             p.d_lb_[k] = generalConstraints_[threadId]->getLowerBoundsIntermediate() - g_eval + p.C_[k] * x_[k] +
                          p.D_[k] * u_ff_[k];
             p.d_ub_[k] = generalConstraints_[threadId]->getUpperBoundsIntermediate() - g_eval + p.C_[k] * x_[k] +
@@ -807,34 +751,6 @@ void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
         }
     }
 }
-
-
-template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
-void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::computeQuadraticCosts(size_t threadId,
-    size_t k)
-{
-    LQOCProblem_t& p = *lqocProblem_;
-    const scalar_t& dt = settings_.dt;
-
-    // feed current state and control to cost function
-    costFunctions_[threadId]->setCurrentStateAndControl(x_[k], u_ff_[k], dt * k);
-
-    // derivative of cost with respect to state
-    p.q_[k] = costFunctions_[threadId]->evaluateIntermediate() * dt;
-
-    p.qv_[k] = costFunctions_[threadId]->stateDerivativeIntermediate() * dt;
-
-    p.Q_[k] = costFunctions_[threadId]->stateSecondDerivativeIntermediate() * dt;
-
-    // derivative of cost with respect to control and state
-    p.P_[k] = costFunctions_[threadId]->stateControlDerivativeIntermediate() * dt;
-
-    // derivative of cost with respect to control
-    p.rv_[k] = costFunctions_[threadId]->controlDerivativeIntermediate() * dt;
-
-    p.R_[k] = costFunctions_[threadId]->controlSecondDerivativeIntermediate() * dt;
-}
-
 
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
 void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::initializeCostToGo()
@@ -845,9 +761,12 @@ void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
     costFunctions_[settings_.nThreads]->setCurrentStateAndControl(x_[K_], control_vector_t::Zero(), settings_.dt * K_);
 
     // derivative of terminal cost with respect to state
-    p.q_[K_] = costFunctions_[settings_.nThreads]->evaluateTerminal();
-    p.qv_[K_] = costFunctions_[settings_.nThreads]->stateDerivativeTerminal();
     p.Q_[K_] = costFunctions_[settings_.nThreads]->stateSecondDerivativeTerminal();
+    p.qv_[K_] = costFunctions_[settings_.nThreads]->stateDerivativeTerminal() - p.Q_[K_] * x_[K_];
+    // p.q_[K_] = ... // omitted since not needed in GNMS/ILQR -- WARNING, potentially implement when using a different QP solver
+
+    // set terminal reference state
+    p.x_[K_] = x_[K_];
 
     // init terminal general constraints, if any
     if (generalConstraints_[settings_.nThreads] != nullptr)
@@ -870,12 +789,11 @@ void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
     }
 }
 
-
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
 void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::printSummary()
 {
-    SCALAR d_norm_l1 = computeDefectsNorm<1>(lqocProblem_->b_);
-    SCALAR d_norm_l2 = computeDefectsNorm<2>(lqocProblem_->b_);
+    SCALAR d_norm_l1 = computeDefectsNorm<1>(d_);
+    SCALAR d_norm_l2 = computeDefectsNorm<2>(d_);
     SCALAR totalCost = intermediateCostBest_ + finalCostBest_;
 
     computeBoxConstraintErrorOfTrajectory(settings_.nThreads, x_, u_ff_, e_box_norm_);
@@ -916,7 +834,6 @@ void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
     }
 }
 
-
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
 void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::logToMatlab(const size_t& iteration)
 {
@@ -937,7 +854,7 @@ void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
         matFile_.put("x", x_.toImplementation());
         matFile_.put("u_ff", u_ff_.toImplementation());
         matFile_.put("t", t_.toEigenTrajectory());
-        matFile_.put("d", lqocProblem_->b_.toImplementation());
+        matFile_.put("d", d_.toImplementation());
         matFile_.put("xShot", xShot_.toImplementation());
 
         matFile_.put("A", p.A_.toImplementation());
@@ -954,7 +871,7 @@ void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
         matFile_.put("cost", getCost());
         matFile_.put("alphaStep", alphaBest_);
 
-        d_norm_ = computeDefectsNorm<1>(lqocProblem_->b_);
+        d_norm_ = computeDefectsNorm<1>(d_);
         matFile_.put("d_norm", d_norm_);
 
         computeBoxConstraintErrorOfTrajectory(settings_.nThreads, x_, u_ff_, e_box_norm_);
@@ -984,10 +901,10 @@ void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
 
         matFile_.put("x", x_.toImplementation());
         matFile_.put("u_ff", u_ff_.toImplementation());
-        matFile_.put("d", lqocProblem_->b_.toImplementation());
+        matFile_.put("d", d_);
         matFile_.put("cost", getCost());
 
-        d_norm_ = computeDefectsNorm<1>(lqocProblem_->b_);
+        d_norm_ = computeDefectsNorm<1>(d_);
         matFile_.put("d_norm", d_norm_);
 
         computeBoxConstraintErrorOfTrajectory(settings_.nThreads, x_, u_ff_, e_box_norm_);
@@ -1005,7 +922,7 @@ template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, type
 const core::ControlTrajectory<CONTROL_DIM, SCALAR>
 NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::getControlTrajectory() const
 {
-    // \todo this method currently copies the time array (suboptimal)
+    //! \todo this method currently copies the time array (suboptimal)
 
     core::tpl::TimeArray<SCALAR> t_control = t_;
     t_control.pop_back();
@@ -1033,219 +950,52 @@ SCALAR NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>
 
 
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
-bool NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::lineSearchSingleShooting()
-{
-    // lowest cost is cost of last rollout
-    lowestCost_ = intermediateCostBest_ + finalCostBest_;
-    scalar_t lowestCostPrevious = lowestCost_;
-
-    //! backup controller that led to current trajectory
-    u_ff_prev_ = u_ff_;  // todo note this might be redundant
-    x_prev_ = x_;        // todo note this might be redundant
-
-    if (!settings_.lineSearchSettings.active)
-    {
-        StateVectorArray x_ref_lqr_local(K_ + 1);
-        ControlVectorArray uff_local(K_);
-
-        uff_local = u_ff_ + lu_;          //  add lu
-        x_ref_lqr_local = x_prev_ + lx_;  // stabilize around current solution candidate
-
-        bool dynamicsGood = rolloutSingleShot(
-            settings_.nThreads, 0, uff_local, x_, x_ref_lqr_local, xShot_, *this->substepsX_, *this->substepsU_);
-
-        if (dynamicsGood)
-        {
-            intermediateCostBest_ = std::numeric_limits<scalar_t>::max();
-            finalCostBest_ = std::numeric_limits<scalar_t>::max();
-            computeCostsOfTrajectory(settings_.nThreads, x_, uff_local, intermediateCostBest_, finalCostBest_);
-            lowestCost_ = intermediateCostBest_ + finalCostBest_;
-
-            if (settings_.printSummary)
-            {
-                //! compute l2 norms of state and control update
-                lu_norm_ = computeDiscreteArrayNorm<ControlVectorArray, 2>(u_ff_prev_, uff_local);
-                lx_norm_ = computeDiscreteArrayNorm<StateVectorArray, 2>(x_prev_, x_);
-            }
-            else
-            {
-#ifdef MATLAB  // in case of no debug printing but still logging, need to compute them \
-    //! compute l2 norms of state and control update
-                lu_norm_ = computeDiscreteArrayNorm<ControlVectorArray, 2>(u_ff_prev_, uff_local);
-                lx_norm_ = computeDiscreteArrayNorm<StateVectorArray, 2>(x_prev_, x_);
-#endif
-            }
-
-            x_prev_ = x_;
-            u_ff_.swap(uff_local);
-            alphaBest_ = 1;
-        }
-        else
-        {
-            if (settings_.debugPrint)
-            {
-                std::cout << "CONVERGED: System became unstable!" << std::endl;
-            }
-            return false;
-        }
-    }
-    else
-    {
-        // merit of previous trajectory
-        lowestCost_ = intermediateCostBest_ + finalCostBest_ +
-                      (e_box_norm_ + e_gen_norm_) * settings_.meritFunctionRhoConstraints;
-        lowestCostPrevious = lowestCost_;
-
-        if (settings_.lineSearchSettings.debugPrint)
-        {
-            std::cout << "[LineSearch]: Starting line search." << std::endl;
-            std::cout << "[LineSearch]: Merit last rollout: " << lowestCost_ << std::endl;
-        }
-
-        alphaBest_ = performLineSearch();
-
-        if (settings_.lineSearchSettings.debugPrint)
-        {
-            std::cout << "[LineSearch]: Best control found at alpha: " << alphaBest_ << " . Will use this control."
-                      << std::endl;
-        }
-
-        if (alphaBest_ == 0.0)
-        {
-            if (settings_.debugPrint)
-            {
-                {
-                    std::cout << "WARNING: No better control found. Converged." << std::endl;
-                }
-                return false;
-            }
-        }
-    }
-
-    if ((fabs((lowestCostPrevious - lowestCost_) / lowestCostPrevious)) > settings_.min_cost_improvement)
-    {
-        return true;  //! found better cost
-    }
-
-    if (settings_.debugPrint)
-    {
-        std::cout << "CONVERGED: Cost last iteration: " << lowestCostPrevious << ", current cost: " << lowestCost_
-                  << std::endl;
-        std::cout << "CONVERGED: Cost improvement ratio was: "
-                  << (lowestCostPrevious - lowestCost_) / lowestCostPrevious
-                  << "x, which is lower than convergence criteria: " << settings_.min_cost_improvement << std::endl;
-    }
-    return false;
-}
-
-
-template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
-void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::executeLineSearchSingleShooting(
-    const size_t threadId,
-    const scalar_t alpha,
-    ct::core::StateVectorArray<STATE_DIM, SCALAR>& x_local,
-    ct::core::ControlVectorArray<CONTROL_DIM, SCALAR>& u_local,
-    scalar_t& intermediateCost,
-    scalar_t& finalCost,
-    scalar_t& e_box_norm,
-    scalar_t& e_gen_norm,
-    StateSubsteps& substepsX,
-    ControlSubsteps& substepsU,
-    std::atomic_bool* terminationFlag) const
-{
-    intermediateCost = std::numeric_limits<scalar_t>::infinity();
-    finalCost = std::numeric_limits<scalar_t>::infinity();
-    e_box_norm = 0.0;
-    e_gen_norm = 0.0;
-
-    if (terminationFlag && *terminationFlag)
-        return;
-
-    StateVectorArray x_ref_lqr;
-    StateVectorArray xShot_local(K_ + 1);  //! note this is currently only a dummy (\todo nicer solution?)
-
-    //! if stabilizing about new solution candidate, choose lu as feedforward increment and also increment x_prev_ by lx
-    u_local = lu_ * alpha + u_ff_prev_;
-    x_ref_lqr = lx_ * alpha + x_prev_;
-
-    bool dynamicsGood =
-        rolloutSingleShot(threadId, 0, u_local, x_local, x_ref_lqr, xShot_local, substepsX, substepsU, terminationFlag);
-
-    if (terminationFlag && *terminationFlag)
-        return;
-
-    if (dynamicsGood)
-    {
-        // compute cost specific to this alpha
-        computeCostsOfTrajectory(threadId, x_local, u_local, intermediateCost, finalCost);
-
-        // compute constraint violations specific to this alpha
-        if (boxConstraints_[threadId] != nullptr)
-            computeBoxConstraintErrorOfTrajectory(threadId, x_local, u_local, e_box_norm);
-        if (generalConstraints_[threadId] != nullptr)
-            computeGeneralConstraintErrorOfTrajectory(threadId, x_local, u_local, e_gen_norm);
-    }
-    else
-    {
-        if (settings_.debugPrint)
-        {
-            std::string msg = std::string("dynamics not good, thread: ") + std::to_string(threadId);
-            std::cout << msg << std::endl;
-        }
-    }
-}
-
-
-template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
-bool NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::lineSearchMultipleShooting()
+bool NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::lineSearch()
 {
     // lowest cost
     scalar_t lowestCostPrevious;
 
-    //! backup controller that led to current trajectory
+    // backup controller that led to current trajectory
     u_ff_prev_ = u_ff_;
     x_prev_ = x_;
 
+    // get feedback from lqoc solver which is always the same
+    getFeedback();
 
-    if (!settings_.lineSearchSettings.active)  //! do full step updates
+    if (!settings_.lineSearchSettings.active)  // do full step updates
     {
-        //! lowest cost is cost of last rollout
+        // lowest cost is cost of last rollout
         lowestCostPrevious = intermediateCostBest_ + finalCostBest_;
 
-        //! update control and states
+        // update controls and states
         doFullStepUpdate();
 
         resetDefects();
 
         rolloutShots(0, K_ - 1);
-
-        d_norm_ = computeDefectsNorm<1>(lqocProblem_->b_);
+        d_norm_ = computeDefectsNorm<1>(d_);
 
         updateCosts();
 
         lowestCost_ = intermediateCostBest_ + finalCostBest_;
 
-        if (settings_.printSummary)
-        {
-            lu_norm_ = computeDiscreteArrayNorm<ControlVectorArray, 2>(u_ff_prev_, u_ff_);
-            lx_norm_ = computeDiscreteArrayNorm<StateVectorArray, 2>(x_prev_, x_);
-        }
-        else
-        {
-#ifdef MATLAB
-            lu_norm_ = computeDiscreteArrayNorm<ControlVectorArray, 2>(u_ff_prev_, u_ff_);
-            lx_norm_ = computeDiscreteArrayNorm<StateVectorArray, 2>(x_prev_, x_);
-#endif
-        }
+        // compute the control and state update norms separately here, since they are usually different from the pure lqoc solver update
+        lu_norm_ = computeDiscreteArrayNorm<ControlVectorArray, 2>(u_ff_prev_, u_ff_);
+        lx_norm_ = computeDiscreteArrayNorm<StateVectorArray, 2>(x_prev_, x_);
+
         x_prev_ = x_;
         alphaBest_ = 1;
     }
-    else  //! do line search over a merit function trading off costs and constraint violations
+    else  // do line search over a merit function trading off costs and constraint violations
     {
         // merit of previous trajectory
+        d_norm_ = computeDefectsNorm<1>(d_);
         lowestCost_ = intermediateCostBest_ + finalCostBest_ + d_norm_ * settings_.meritFunctionRho +
                       (e_box_norm_ + e_gen_norm_) * settings_.meritFunctionRhoConstraints;
         lowestCostPrevious = lowestCost_;
+
+        resetDefects();
+
 
         if (settings_.lineSearchSettings.debugPrint)
         {
@@ -1261,8 +1011,7 @@ bool NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
 
         if (settings_.lineSearchSettings.debugPrint)
         {
-            std::cout << "[LineSearch]: Best control found at alpha: " << alphaBest_ << ", with trade-off "
-                      << std::endl;
+            std::cout << "[LineSearch]: Best control found at alpha: " << alphaBest_ << ", with " << std::endl;
             std::cout << "[LineSearch]: Cost:\t" << intermediateCostBest_ + finalCostBest_ << std::endl;
             std::cout << "[LineSearch]: Defect:\t" << d_norm_ << std::endl;
             std::cout << "[LineSearch]: err box constr:\t" << e_box_norm_ << std::endl;
@@ -1300,11 +1049,10 @@ bool NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
 
 
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
-void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::executeLineSearchMultipleShooting(
-    const size_t threadId,
+void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::executeLineSearch(const size_t threadId,
     const scalar_t alpha,
-    const ControlVectorArray& u_ff_update,
-    const StateVectorArray& x_update,
+    const ControlVectorArray& u_ff_new,
+    const StateVectorArray& x_new,
     ct::core::StateVectorArray<STATE_DIM, SCALAR>& x_alpha,
     ct::core::StateVectorArray<STATE_DIM, SCALAR>& x_shot_alpha,
     ct::core::StateVectorArray<STATE_DIM, SCALAR>& defects_recorded,
@@ -1327,24 +1075,20 @@ void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
     if (terminationFlag && *terminationFlag)
         return;
 
-    //! update feedforward
-    u_alpha = u_ff_update * alpha + u_ff_prev_;
+    // update feedforward with weighting alpha
+    u_alpha = u_ff_new * alpha + u_ff_prev_ * (1 - alpha);
 
-    //! update state decision variables
-    x_alpha = x_update * alpha + x_prev_;
+    // update state decision variables with weighting alpha
+    x_alpha = x_new * alpha + x_prev_ * (1 - alpha);
 
-
-    if (terminationFlag && *terminationFlag)
-        return;
-
-    bool dynamicsGood = rolloutShotsSingleThreaded(
-        threadId, 0, K_ - 1, u_alpha, x_alpha, x_alpha, x_shot_alpha, defects_recorded, substepsX, substepsU);
 
     if (terminationFlag && *terminationFlag)
         return;
 
-    //! compute defects norm
-    defectNorm = computeDefectsNorm<1>(defects_recorded);
+    bool dynamicsGood;
+
+    dynamicsGood = rolloutShotsSingleThreaded(threadId, 0, K_ - 1, u_alpha, x_alpha, x_alpha, x_shot_alpha,
+        defects_recorded, substepsX, substepsU, terminationFlag);
 
     if (terminationFlag && *terminationFlag)
         return;
@@ -1352,11 +1096,24 @@ void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
     //! compute costs
     if (dynamicsGood)
     {
+        //! compute defects norm
+        defectNorm = computeDefectsNorm<1>(defects_recorded);
+
+        if (terminationFlag && *terminationFlag)
+            return;
+
         computeCostsOfTrajectory(threadId, x_alpha, u_alpha, intermediateCost, finalCost);
+
+        if (terminationFlag && *terminationFlag)
+            return;
 
         // compute constraint violations specific to this alpha
         if (boxConstraints_[threadId] != nullptr)
             computeBoxConstraintErrorOfTrajectory(threadId, x_alpha, u_alpha, e_box_norm);
+
+        if (terminationFlag && *terminationFlag)
+            return;
+
         if (generalConstraints_[threadId] != nullptr)
             computeGeneralConstraintErrorOfTrajectory(threadId, x_alpha, u_alpha, e_gen_norm);
     }
@@ -1368,9 +1125,6 @@ void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
             std::cout << msg << std::endl;
         }
     }
-
-    if (terminationFlag && *terminationFlag)
-        return;
 }
 
 
@@ -1386,8 +1140,6 @@ void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
     // if solver is GNRiccati - we iterate backward up to the first stage
     else if (settings_.lqocp_solver == Settings_t::LQOCP_SOLVER::GNRICCATI_SOLVER)
     {
-        lqocProblem_->x_ = x_;
-        lqocProblem_->u_ = u_ff_;
         lqocSolver_->setProblem(lqocProblem_);
 
         //iterate backward up to first stage
@@ -1411,15 +1163,12 @@ void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
     }
     else if (settings_.lqocp_solver == Settings_t::LQOCP_SOLVER::GNRICCATI_SOLVER)
     {
-        // if solver is GNRiccati, solve the first stage and get solution
-        lqocProblem_->x_ = x_;
-        lqocProblem_->u_ = u_ff_;
         lqocSolver_->setProblem(lqocProblem_);
 
         for (int i = endIndex; i >= 0; i--)
             lqocSolver_->solveSingleStage(i);
 
-        lqocSolver_->computeStateAndControlUpdates();
+        lqocSolver_->extractLQSolution();
     }
     else
         throw std::runtime_error("unknown solver type in finishSolveLQProblem()");
@@ -1430,9 +1179,6 @@ template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, type
 void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::solveFullLQProblem()
 {
     lqpCounter_++;
-
-    lqocProblem_->x_ = x_;
-    lqocProblem_->u_ = u_ff_;
 
     if (lqocProblem_->isBoxConstrained())
     {
@@ -1454,7 +1200,6 @@ void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
     lqocSolver_->solve();
 }
 
-
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
 void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::updateCosts()
 {
@@ -1464,14 +1209,15 @@ void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
 }
 
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
-void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::retrieveLastLinearizedModel(
+void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::retrieveLastAffineModel(
     StateMatrixArray& A,
-    StateControlMatrixArray& B)
+    StateControlMatrixArray& B,
+    StateVectorArray& b)
 {
     A = lqocProblem_->A_;
     B = lqocProblem_->B_;
+    b = lqocProblem_->b_;
 }
-
 
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
 const typename NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::Policy_t&
@@ -1493,31 +1239,18 @@ void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
     finalCostBest_ = std::numeric_limits<scalar_t>::infinity();
     intermediateCostPrevious_ = std::numeric_limits<scalar_t>::infinity();
     finalCostPrevious_ = std::numeric_limits<scalar_t>::infinity();
+    resetDefects();
 }
 
 
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
 void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::doFullStepUpdate()
 {
-    u_ff_ += lu_;
-    x_ += lx_;
+    u_ff_ = lqocSolver_->getSolutionControl();
+    x_ = lqocSolver_->getSolutionState();
 
     alphaBest_ = 1.0;
-
-    if (settings_.debugPrint || settings_.printSummary)
-    {
-        lx_norm_ = computeDiscreteArrayNorm<StateVectorArray, 2>(lx_);
-        lu_norm_ = computeDiscreteArrayNorm<ControlVectorArray, 2>(lu_);
-    }
-    else
-    {
-#ifdef MATLAB
-        lx_norm_ = computeDiscreteArrayNorm<StateVectorArray, 2>(lx_);
-        lu_norm_ = computeDiscreteArrayNorm<ControlVectorArray, 2>(lu_);
-#endif
-    }
 }
-
 
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
 void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::logSummaryToMatlab(
@@ -1534,26 +1267,11 @@ NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::getSu
     return summaryAllIterations_;
 }
 
-
-template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
-void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::getStateUpdates()
-{
-    lx_ = lqocSolver_->getStateUpdates();
-}
-
-
-template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
-void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::getControlUpdates()
-{
-    lu_ = lqocSolver_->getControlUpdates();
-}
-
-
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
 void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::getFeedback()
 {
     if (settings_.closedLoopShooting)
-        lqocSolver_->getFeedback(L_);
+        L_ = lqocSolver_->getSolutionFeedback();
     else
         L_.setConstant(core::FeedbackMatrix<STATE_DIM, CONTROL_DIM, SCALAR>::Zero());  // TODO should eventually go away
 }
@@ -1562,14 +1280,14 @@ void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
 void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::resetDefects()
 {
-    lqocProblem_->b_.setConstant(state_vector_t::Zero());
+    d_.setConstant(state_vector_t::Zero());
 }
 
 
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
 void NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::computeDefectsNorm()
 {
-    d_norm_ = computeDefectsNorm<1>(lqocProblem_->b_);
+    d_norm_ = computeDefectsNorm<1>(d_);
 }
 
 
@@ -1623,7 +1341,7 @@ SCALAR NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
 bool NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::testConsistency()
 {
-    return true;
+    return true;  // TODO this is currently meaningless
 }
 
 
@@ -1731,9 +1449,15 @@ int NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::g
 
 
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
-int NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::getNumStepsPerShot()
+int NLOCBackendBase<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::getNumStepsPerShot() const
 {
-    return settings_.K_shot;
+    // todo try to find clear solution here
+    if (settings_.nlocp_algorithm == NLOptConSettings::NLOCP_ALGORITHM::ILQR)
+        return K_;
+    else if (settings_.nlocp_algorithm == NLOptConSettings::NLOCP_ALGORITHM::GNMS)
+        return settings_.K_shot;
+    else
+        throw std::runtime_error("Unknown algorithm type in NLOCBackendBase::getNumStepsPerShot()");
 }
 
 
