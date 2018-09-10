@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -26,7 +25,7 @@ namespace core {
  * @tparam OUT_DIM Output dimensionailty of the function (use Eigen::Dynamic (-1) for dynamic size)
  */
 template <int IN_DIM, int OUT_DIM>
-class DerivativesCppadJIT : public Derivatives<IN_DIM, OUT_DIM, double>// double on purpose!
+class DerivativesCppadJIT : public Derivatives<IN_DIM, OUT_DIM, double>  // double on purpose!
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -41,7 +40,7 @@ public:
     typedef Eigen::Matrix<double, OUT_DIM, 1> OUT_TYPE_D;       //!< function output vector type
     typedef Eigen::Matrix<double, OUT_DIM, IN_DIM> JAC_TYPE_D;  //!< Jacobian type
     typedef Eigen::Matrix<double, OUT_DIM, IN_DIM, Eigen::RowMajor>
-        JAC_TYPE_ROW_MAJOR;  //!< Jocobian type in row-major format
+        JAC_TYPE_ROW_MAJOR;  //!< Jacobian type in row-major format
     typedef Eigen::Matrix<double, IN_DIM, IN_DIM> HES_TYPE_D;
     typedef Eigen::Matrix<double, IN_DIM, IN_DIM, Eigen::RowMajor> HES_TYPE_ROW_MAJOR;
 
@@ -63,30 +62,31 @@ public:
      *                        template parameter IN_DIM is -1 (dynamic)
      */
     DerivativesCppadJIT(FUN_TYPE_CG& f, int inputDim = IN_DIM, int outputDim = OUT_DIM)
-        : DerivativesBase(),
-          cgStdFun_(f),
-          inputDim_(inputDim),
-          outputDim_(outputDim),
-          compiled_(false), libName_("")
+        : DerivativesBase(), cgStdFun_(f), inputDim_(inputDim), outputDim_(outputDim), compiled_(false), libName_("")
     {
         update(f, inputDim, outputDim);
     }
 
-
-    //! copy constructor
+    /*!
+     * @brief copy constructor
+     * @param arg instance to copy
+     * @note  It is  important to not only copy the pointer to the dynamic library, but to load the library properly instead.
+     */
     DerivativesCppadJIT(const DerivativesCppadJIT& arg)
         : DerivativesBase(arg),
           cgStdFun_(arg.cgStdFun_),
           inputDim_(arg.inputDim_),
           outputDim_(arg.outputDim_),
           compiled_(arg.compiled_),
-          libName_(arg.libName_),
-          dynamicLib_(arg.dynamicLib_)
+          libName_(arg.libName_)
     {
         cgCppadFun_ = arg.cgCppadFun_;
         if (compiled_)
+        {
+            dynamicLib_ = internal::CGHelpers::loadDynamicLibCppad<double>(libName_);
             model_ =
                 std::shared_ptr<CppAD::cg::GenericModel<double>>(dynamicLib_->model("DerivativesCppad" + libName_));
+        }
     }
 
 
@@ -118,7 +118,6 @@ public:
     virtual ~DerivativesCppadJIT() = default;
     //! deep cloning of Jacobian
     DerivativesCppadJIT* clone() const { return new DerivativesCppadJIT<IN_DIM, OUT_DIM>(*this); }
-
     virtual OUT_TYPE_D forwardZero(const Eigen::VectorXd& x)
     {
         if (compiled_)
@@ -126,7 +125,8 @@ public:
             assert(model_->isForwardZeroAvailable() == true);
             return model_->ForwardZero(x);
         }
-        else {
+        else
+        {
             throw std::runtime_error("Error: Compile the library first by calling compileJIT(..)");
         }
     }
@@ -148,7 +148,6 @@ public:
         }
         else
             throw std::runtime_error("Error: Compile the library first by calling compileJIT(..)");
-
     }
 
     virtual void sparseJacobian(const Eigen::VectorXd& x,
@@ -364,8 +363,14 @@ public:
         if (compiled_)
             return;
 
+        struct timespec ts;
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+
         // assigning a unique identifier to the library in order to avoid race conditions in JIT
-        libName_ = libName + std::to_string(std::hash<std::thread::id>()(std::this_thread::get_id()));
+        std::string uniqueID =
+            std::to_string(std::hash<std::thread::id>()(std::this_thread::get_id())) + "_" + std::to_string(ts.tv_nsec);
+
+        libName_ = libName + uniqueID;
 
         CppAD::cg::ModelCSourceGen<double> cgen(cgCppadFun_, "DerivativesCppad" + libName_);
 
@@ -381,7 +386,7 @@ public:
         cgen.setMaxAssignmentsPerFunc(settings.maxAssignements_);
 
         CppAD::cg::ModelLibraryCSourceGen<double> libcgen(cgen);
-        std::string tempDir = "cppad_temp" + std::to_string(std::hash<std::thread::id>()(std::this_thread::get_id()));
+        std::string tempDir = "cppad_temp" + uniqueID;
         if (verbose)
         {
             std::cout << "Starting to compile " << libName_ << " library ..." << std::endl;
@@ -457,7 +462,9 @@ public:
         }
     }
 
-private:
+    //! retrieve the dynamic library, e.g. for testing purposes
+    const std::shared_ptr<CppAD::cg::DynamicLib<double>> getDynamicLib() { return dynamicLib_; }
+protected:
     //! record the Auto-Diff terms for code generation
     void recordCg()
     {

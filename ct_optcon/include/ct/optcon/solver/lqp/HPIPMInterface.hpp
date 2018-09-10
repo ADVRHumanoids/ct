@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -66,9 +65,7 @@ public:
     using box_constr_sparsity_t = Eigen::Matrix<int, max_box_constr_dim, 1>;
 
     //! constructor
-    HPIPMInterface(const int N = -1,
-        const int nb = 0,
-        const int ng = 0);
+    HPIPMInterface(const int N = -1, const int nb = 0, const int ng = 0);
 
     //! destructor
     virtual ~HPIPMInterface();
@@ -110,9 +107,7 @@ public:
     virtual void initializeAndAllocate() override;
 
 private:
-    void setSolverDimensions(const int N,
-        const int nb = 0,
-        const int ng = 0);
+    void setSolverDimensions(const int N, const int nb = 0, const int ng = 0);
 
     /*!
      * @brief set problem implementation for hpipm

@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -22,6 +21,9 @@ public:
     static const size_t STATE_DIM = 2;
     static const size_t CONTROL_DIM = 1;
 
+    typedef ControlVector<1, SCALAR> control_vector_t;
+    typedef StateVector<2, SCALAR> state_vector_t;
+
     TestNonlinearSystem() = delete;
 
     // constructor directly using frequency and damping coefficients
@@ -35,8 +37,8 @@ public:
     TestNonlinearSystem* clone() const override { return new TestNonlinearSystem(*this); }
     virtual void computeControlledDynamics(const StateVector<2, SCALAR>& state,
         const SCALAR& t,
-        const ControlVector<1, SCALAR>& control,
-        StateVector<2, SCALAR>& derivative) override
+        const control_vector_t& control,
+        state_vector_t& derivative) override
     {
         //this is pretty much random
         derivative(0) = state(1) * state(0) + state(1) * control(0);

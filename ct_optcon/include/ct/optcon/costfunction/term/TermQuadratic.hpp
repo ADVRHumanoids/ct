@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -40,6 +39,8 @@ public:
         const control_matrix_t& R,
         const core::StateVector<STATE_DIM, SCALAR_EVAL>& x_ref,
         const core::ControlVector<CONTROL_DIM, SCALAR_EVAL>& u_ref);
+
+    TermQuadratic(std::string& configFile, const std::string& termName, bool verbose = false);
 
     TermQuadratic(const TermQuadratic& arg);
 

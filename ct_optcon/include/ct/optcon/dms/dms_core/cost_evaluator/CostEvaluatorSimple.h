@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -44,13 +43,13 @@ public:
     CostEvaluatorSimple() = delete;
 
     /**
-	 * @brief      Custom constructor
-	 *
-	 * @param[in]  costFct   The cost function
-	 * @param[in]  w         The optimization variables
-	 * @param[in]  timeGrid  The time grid
-	 * @param[in]  settings  The dms settings
-	 */
+   * @brief      Custom constructor
+   *
+   * @param[in]  costFct   The cost function
+   * @param[in]  w         The optimization variables
+   * @param[in]  timeGrid  The time grid
+   * @param[in]  settings  The dms settings
+   */
     CostEvaluatorSimple(std::shared_ptr<ct::optcon::CostFunctionQuadratic<STATE_DIM, CONTROL_DIM, SCALAR>> costFct,
         std::shared_ptr<OptVectorDms<STATE_DIM, CONTROL_DIM, SCALAR>> w,
         std::shared_ptr<tpl::TimeGrid<SCALAR>> timeGrid,
@@ -62,15 +61,15 @@ public:
         updatePhi();
     }
 
-    virtual ~CostEvaluatorSimple() {}
-    virtual SCALAR eval() override;
+    ~CostEvaluatorSimple() override = default;
+    SCALAR eval() override;
 
-    virtual void evalGradient(size_t grad_length, Eigen::Map<Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>>& grad) override;
+    void evalGradient(size_t grad_length, Eigen::Map<Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>>& grad) override;
 
 private:
     /**
-	 * @brief      Updates the weights for the cost interpolation
-	 */
+   * @brief      Updates the weights for the cost interpolation
+   */
     void updatePhi();
 
     std::shared_ptr<ct::optcon::CostFunctionQuadratic<STATE_DIM, CONTROL_DIM, SCALAR>> costFct_;
@@ -90,7 +89,8 @@ SCALAR CostEvaluatorSimple<STATE_DIM, CONTROL_DIM, SCALAR>::eval()
 
     for (size_t i = 0; i < settings_.N_ + 1; ++i)
     {
-        costFct_->setCurrentStateAndControl(w_->getOptimizedState(i), w_->getOptimizedControl(i));
+        costFct_->setCurrentStateAndControl(
+            w_->getOptimizedState(i), w_->getOptimizedControl(i), timeGrid_->getShotStartTime(i));
         cost += phi_(i) * costFct_->evaluateIntermediate();
     }
 
@@ -109,29 +109,10 @@ void CostEvaluatorSimple<STATE_DIM, CONTROL_DIM, SCALAR>::evalGradient(size_t gr
     grad.setZero();
     for (size_t i = 0; i < settings_.N_ + 1; ++i)
     {
-        costFct_->setCurrentStateAndControl(w_->getOptimizedState(i), w_->getOptimizedControl(i));
+        costFct_->setCurrentStateAndControl(
+            w_->getOptimizedState(i), w_->getOptimizedControl(i), timeGrid_->getShotStartTime(i));
         grad.segment(w_->getStateIndex(i), STATE_DIM) += phi_(i) * costFct_->stateDerivativeIntermediate();
         grad.segment(w_->getControlIndex(i), CONTROL_DIM) += phi_(i) * costFct_->controlDerivativeIntermediate();
-
-        // if(settings_.objectiveType_ == DmsSettings::OPTIMIZE_GRID && i < settings_.N_)
-        // {
-        // 	if(settings_.splineType_ == DmsSettings::ZERO_ORDER_HOLD)
-        // 	{
-        // 		costFct_->setCurrentStateAndControl(w_->getOptimizedState(i), w_->getOptimizedControl(i));
-        // 		double dJdH = phi_diff_h_(i) * costFct_->evaluateIntermediate();
-        // 		size_t idx = w_->getTimeSegmentIndex(i);
-        // 		grad(idx) = dJdH;
-        // 	}
-
-        // 	else if(settings_.splineType_ == DmsSettings::PIECEWISE_LINEAR)
-        // 	{
-        // 		costFct_->setCurrentStateAndControl(w_->getOptimizedState(i), w_->getOptimizedControl(i));
-        // 		double dJdH = 0.5 * costFct_->evaluateIntermediate();
-        // 		costFct_->setCurrentStateAndControl(w_->getOptimizedState(i+1), w_->getOptimizedControl(i+1));
-        // 		dJdH += 0.5 * costFct_->evaluateIntermediate();
-        // 		grad(w_->getTimeSegmentIndex(i)) = dJdH;
-        // 	}
-        // }
     }
 
     /* gradient of terminal cost */

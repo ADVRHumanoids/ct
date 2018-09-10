@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -66,8 +65,8 @@ public:
     /**
 	 * @brief      The destructor.
 	 */
-    virtual ~CostEvaluatorFull() {}
-    virtual SCALAR eval() override
+    ~CostEvaluatorFull() override = default;
+    SCALAR eval() override
     {
         SCALAR cost = SCALAR(0.0);
 
@@ -85,7 +84,7 @@ public:
         return cost;
     }
 
-    virtual void evalGradient(size_t grad_length, Eigen::Map<Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>>& grad) override
+    void evalGradient(size_t grad_length, Eigen::Map<Eigen::Matrix<SCALAR, Eigen::Dynamic, 1>>& grad) override
     {
         grad.setZero();
 

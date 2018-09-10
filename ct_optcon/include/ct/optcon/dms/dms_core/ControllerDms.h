@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -47,8 +46,8 @@ public:
 
 
     ControllerDms(const ControllerDms& arg) : controlSpliner_(arg.controlSpliner_), shotIdx_(arg.shotIdx_) {}
-    virtual ~ControllerDms() {}
-    virtual ControllerDms<STATE_DIM, CONTROL_DIM, SCALAR>* clone() const override
+    ~ControllerDms() override = default;
+    ControllerDms<STATE_DIM, CONTROL_DIM, SCALAR>* clone() const override
     {
         return new ControllerDms<STATE_DIM, CONTROL_DIM, SCALAR>(*this);
     }
@@ -60,13 +59,13 @@ public:
         assert(controlAction == controlAction);
     }
 
-    virtual core::ControlMatrix<CONTROL_DIM, SCALAR> getDerivativeU0(const state_vector_t& state,
+    core::ControlMatrix<CONTROL_DIM, SCALAR> getDerivativeU0(const state_vector_t& state,
         const SCALAR time) override
     {
         return controlSpliner_->splineDerivative_q_i(time, shotIdx_);
     }
 
-    virtual core::ControlMatrix<CONTROL_DIM, SCALAR> getDerivativeUf(const state_vector_t& state,
+    core::ControlMatrix<CONTROL_DIM, SCALAR> getDerivativeUf(const state_vector_t& state,
         const SCALAR time) override
     {
         return controlSpliner_->splineDerivative_q_iplus1(time, shotIdx_);

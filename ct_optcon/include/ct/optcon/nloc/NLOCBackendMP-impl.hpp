@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
  **********************************************************************************************************************/
 
@@ -210,8 +209,7 @@ void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::la
 
 
 template <size_t STATE_DIM, size_t CONTROL_DIM, size_t P_DIM, size_t V_DIM, typename SCALAR, bool CONTINUOUS>
-void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::computeLQApproximation(
-    size_t firstIndex,
+void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::computeLQApproximation(size_t firstIndex,
     size_t lastIndex)
 {
     // fill terminal cost
@@ -552,8 +550,8 @@ void NLOCBackendMP<STATE_DIM, CONTROL_DIM, P_DIM, V_DIM, SCALAR, CONTINUOUS>::li
 
             if (this->settings_.lineSearchSettings.debugPrint)
             {
-                printString("[LineSearch, Thread " + std::to_string(threadId) +
-                            "]: Lower cost/merit found at alpha:" + std::to_string(alpha));
+                printString("[LineSearch, Thread " + std::to_string(threadId) + "]: Lower cost/merit found at alpha:" +
+                            std::to_string(alpha));
                 printString("[LineSearch]: Cost:\t" + std::to_string(intermediateCost + finalCost));
                 printString("[LineSearch]: Defect:\t" + std::to_string(defectNorm));
                 printString("[LineSearch]: err box constr:\t" + std::to_string(e_box_norm));

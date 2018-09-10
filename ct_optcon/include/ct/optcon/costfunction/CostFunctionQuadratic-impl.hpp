@@ -1,7 +1,6 @@
 /**********************************************************************************************************************
  This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
- Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
- Licensed under Apache2 license (see LICENSE file in main directory)
+  Licensed under Apache2 license (see LICENSE file in main directory)
  **********************************************************************************************************************/
 
 #pragma once
@@ -109,23 +108,27 @@ void CostFunctionQuadratic<STATE_DIM, CONTROL_DIM, SCALAR>::updateReferenceContr
 }
 
 template <size_t STATE_DIM, size_t CONTROL_DIM, typename SCALAR>
-bool CostFunctionQuadratic<STATE_DIM, CONTROL_DIM, SCALAR>::stateDerivativeIntermediateTest()
+bool CostFunctionQuadratic<STATE_DIM, CONTROL_DIM, SCALAR>::stateDerivativeIntermediateTest(bool verbose)
 {
     state_vector_t derivative = stateDerivativeIntermediate();
     state_vector_t derivativeNd = stateDerivativeIntermediateNumDiff();
-    std::cout << "norm error between derivative/numdiff state : " << std::endl
-              << (derivative - derivativeNd).norm() << std::endl;
+
+    if (verbose)
+        std::cout << "norm error between derivative/numdiff state : " << std::endl
+                  << (derivative - derivativeNd).norm() << std::endl;
 
     return (derivative.isApprox(derivativeNd, 1e-6));
 }
 
 template <size_t STATE_DIM, size_t CONTROL_DIM, typename SCALAR>
-bool CostFunctionQuadratic<STATE_DIM, CONTROL_DIM, SCALAR>::controlDerivativeIntermediateTest()
+bool CostFunctionQuadratic<STATE_DIM, CONTROL_DIM, SCALAR>::controlDerivativeIntermediateTest(bool verbose)
 {
     control_vector_t derivative = controlDerivativeIntermediate();
     control_vector_t derivativeNd = controlDerivativeIntermediateNumDiff();
-    std::cout << "norm error between derivative/numdiff control : " << std::endl
-              << (derivative - derivativeNd).norm() << std::endl;
+
+    if (verbose)
+        std::cout << "norm error between derivative/numdiff control : " << std::endl
+                  << (derivative - derivativeNd).norm() << std::endl;
 
     return (derivative.isApprox(derivativeNd, 1e-6));
 }

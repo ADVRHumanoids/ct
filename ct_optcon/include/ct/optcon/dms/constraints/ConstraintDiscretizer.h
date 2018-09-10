@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -46,11 +45,11 @@ public:
     /**
 	 * @brief      Default constructor
 	 */
-    ConstraintDiscretizer() {}
+    ConstraintDiscretizer() = default;
     /**
 	 * @brief      Destructor
 	 */
-    virtual ~ConstraintDiscretizer() {}
+    ~ConstraintDiscretizer() override = default;
     /**
 	 * @brief      Custom constructor
 	 *
@@ -120,7 +119,7 @@ public:
         discreteJCol_.resize(nonZeroJacCount_);
     }
 
-    virtual VectorXs eval() override
+    VectorXs eval() override
     {
         size_t constraintSize = 0;
         size_t discreteInd = 0;
@@ -154,7 +153,7 @@ public:
         return discreteConstraints_;
     }
 
-    virtual VectorXs evalSparseJacobian() override
+    VectorXs evalSparseJacobian() override
     {
         size_t jacSize = 0;
         size_t discreteInd = 0;
@@ -202,8 +201,8 @@ public:
         return discreteJac_;
     }
 
-    virtual size_t getNumNonZerosJacobian() override { return nonZeroJacCount_; }
-    virtual void genSparsityPattern(Eigen::VectorXi& iRow_vec, Eigen::VectorXi& jCol_vec) override
+    size_t getNumNonZerosJacobian() override { return nonZeroJacCount_; }
+    void genSparsityPattern(Eigen::VectorXi& iRow_vec, Eigen::VectorXi& jCol_vec) override
     {
         size_t discreteInd = 0;
         size_t rowOffset = 0;
@@ -235,8 +234,7 @@ public:
                     discreteInd += nnEle;
                 }
 
-                rowOffset += constraint->getJacobianStateNonZeroCountIntermediate() +
-                             constraint->getJacobianInputNonZeroCountIntermediate();
+                rowOffset += constraint->getIntermediateConstraintsCount();
             }
         }
 
@@ -245,33 +243,32 @@ public:
             nnEle = constraint->getJacobianStateNonZeroCountTerminal();
             if (nnEle > 0)
             {
-                Eigen::VectorXi iRowStateIntermediate(constraint->getJacobianStateNonZeroCountTerminal());
-                Eigen::VectorXi jColStateIntermediate(constraint->getJacobianStateNonZeroCountTerminal());
-                constraint->sparsityPatternStateTerminal(iRowStateIntermediate, jColStateIntermediate);
-                discreteIRow_.segment(discreteInd, nnEle) = iRowStateIntermediate.array() + rowOffset;
-                discreteJCol_.segment(discreteInd, nnEle) = jColStateIntermediate.array() + w_->getStateIndex(N_);
+                Eigen::VectorXi iRowStateTerminal(constraint->getJacobianStateNonZeroCountTerminal());
+                Eigen::VectorXi jColStateTerminal(constraint->getJacobianStateNonZeroCountTerminal());
+                constraint->sparsityPatternStateTerminal(iRowStateTerminal, jColStateTerminal);
+                discreteIRow_.segment(discreteInd, nnEle) = iRowStateTerminal.array() + rowOffset;
+                discreteJCol_.segment(discreteInd, nnEle) = jColStateTerminal.array() + w_->getStateIndex(N_);
                 discreteInd += nnEle;
             }
 
             nnEle = constraint->getJacobianInputNonZeroCountTerminal();
             if (nnEle > 0)
             {
-                Eigen::VectorXi iRowInputIntermediate(constraint->getJacobianInputNonZeroCountTerminal());
-                Eigen::VectorXi jColInputIntermediate(constraint->getJacobianInputNonZeroCountTerminal());
-                constraint->sparsityPatternInputTerminal(iRowInputIntermediate, jColInputIntermediate);
-                discreteIRow_.segment(discreteInd, nnEle) = iRowInputIntermediate.array() + rowOffset;
-                discreteJCol_.segment(discreteInd, nnEle) = jColInputIntermediate.array() + w_->getControlIndex(N_);
+                Eigen::VectorXi iRowInputTerminal(constraint->getJacobianInputNonZeroCountTerminal());
+                Eigen::VectorXi jColInputTerminal(constraint->getJacobianInputNonZeroCountTerminal());
+                constraint->sparsityPatternInputTerminal(iRowInputTerminal, jColInputTerminal);
+                discreteIRow_.segment(discreteInd, nnEle) = iRowInputTerminal.array() + rowOffset;
+                discreteJCol_.segment(discreteInd, nnEle) = jColInputTerminal.array() + w_->getControlIndex(N_);
                 discreteInd += nnEle;
             }
-            rowOffset +=
-                constraint->getJacobianStateNonZeroCountTerminal() + constraint->getJacobianInputNonZeroCountTerminal();
+            rowOffset += constraint->getTerminalConstraintsCount();
         }
 
         iRow_vec = discreteIRow_;
         jCol_vec = discreteJCol_;
     }
 
-    virtual VectorXs getLowerBound() override
+    VectorXs getLowerBound() override
     {
         size_t discreteInd = 0;
         size_t constraintSize = 0;
@@ -302,7 +299,7 @@ public:
         return discreteLowerBound_;
     }
 
-    virtual VectorXs getUpperBound() override
+    VectorXs getUpperBound() override
     {
         size_t discreteInd = 0;
         size_t constraintSize = 0;
@@ -333,7 +330,7 @@ public:
         return discreteUpperBound_;
     }
 
-    virtual size_t getConstraintSize() override { return constraintsCount_; }
+    size_t getConstraintSize() override { return constraintsCount_; }
 private:
     std::shared_ptr<OptVectorDms<STATE_DIM, CONTROL_DIM, SCALAR>> w_;
     std::shared_ptr<SplinerBase<control_vector_t, SCALAR>> controlSpliner_;

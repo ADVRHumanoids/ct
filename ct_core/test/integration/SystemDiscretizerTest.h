@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -29,7 +28,7 @@ TEST(SystemDiscretizerTest, IntegratorComparison)
 
     size_t nTests = 10;
 
-    for (size_t i = 0; i < nTests; ++i)
+    for (size_t i = 1; i < nTests; ++i)
     {
         double w_n = randomNumber(0, 10);
         double zeta = randomNumber(0, 10);

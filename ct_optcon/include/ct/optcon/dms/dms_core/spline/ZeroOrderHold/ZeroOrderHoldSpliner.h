@@ -1,6 +1,5 @@
 /**********************************************************************************************************************
 This file is part of the Control Toolbox (https://adrlab.bitbucket.io/ct), copyright by ETH Zurich, Google Inc.
-Authors:  Michael Neunert, Markus Giftthaler, Markus Stäuble, Diego Pardo, Farbod Farshidian
 Licensed under Apache2 license (see LICENSE file in main directory)
 **********************************************************************************************************************/
 
@@ -37,32 +36,32 @@ public:
 	 * @param[in]  grid  The DMS timegrid
 	 */
     ZeroOrderHoldSpliner(std::shared_ptr<tpl::TimeGrid<SCALAR>> grid) : timeGrid_(grid) {}
-    virtual ~ZeroOrderHoldSpliner() {}
+    ~ZeroOrderHoldSpliner() override = default;
     void computeSpline(const vector_array_t& points) override { zOholds_ = points; }
     // evaluate spline and return vector at interpolation time
-    virtual vector_t evalSpline(const SCALAR time, const size_t shotIdx) override
+    vector_t evalSpline(const SCALAR time, const size_t shotIdx) override
     {
         assert(shotIdx < zOholds_.size());
         assert(zOholds_[shotIdx] == zOholds_[shotIdx]);
         return zOholds_[shotIdx];
     }
 
-    virtual vector_t splineDerivative_t(const SCALAR time, const size_t shotIdx) const override
+    vector_t splineDerivative_t(const SCALAR time, const size_t shotIdx) const override
     {
         return vector_t::Zero();
     }
 
-    virtual vector_t splineDerivative_h_i(const SCALAR time, const size_t shotIdx) const override
+    vector_t splineDerivative_h_i(const SCALAR time, const size_t shotIdx) const override
     {
         return vector_t::Zero();
     }
 
-    virtual matrix_t splineDerivative_q_i(const SCALAR time, const size_t shotIdx) const override
+    matrix_t splineDerivative_q_i(const SCALAR time, const size_t shotIdx) const override
     {
         return matrix_t::Identity();
     }
 
-    virtual matrix_t splineDerivative_q_iplus1(const SCALAR time, const size_t shotIdx) const override
+    matrix_t splineDerivative_q_iplus1(const SCALAR time, const size_t shotIdx) const override
     {
         return matrix_t::Zero();
     }
