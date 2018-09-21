@@ -12,6 +12,8 @@ find_package(catkin REQUIRED
     ct_core
 )
 
+message(STATUS "************************ ${catkin_INCLUDE_DIRS}")
+
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -pthread -fopenmp -std=c++11 -Wall")
 SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -pthread -std=c++11 -Wall")
@@ -277,3 +279,10 @@ endif()
 
 
 ct_configure_clang_tidy(INC_DIRS)
+
+# Mark cpp header files for installation
+install(DIRECTORY include/
+    DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}
+#     FILES_MATCHING PATTERN "*.h"
+#     PATTERN ".svn" EXCLUDE
+)

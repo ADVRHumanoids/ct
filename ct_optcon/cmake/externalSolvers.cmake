@@ -39,27 +39,28 @@ endif(HPIPM)
 set(NLP_LIBS "")
 
 ## include IPOPT
-find_package(ipopt QUIET)
-if(DEFINED ENV{IPOPT_SOURCE_DIR} OR ipopt_FOUND)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(IPOPT REQUIRED ipopt)
+if(${IPOPT_FOUND})
     set(BUILD_WITH_IPOPT_SUPPORT ON)
     message(STATUS "Found IPOPT - building with IPOPT support")
-    if(ipopt_FOUND)
+    if(${IPOPT_FOUND})
       message(STATUS "Using LOCAL installation of IPOPT")
-      set(IPOPT_BUILD_DIR ${CMAKE_BINARY_DIR}/build/include/coin)
+#       set(IPOPT_BUILD_DIR ${CMAKE_BINARY_DIR}/build/include/coin)
     elseif(DEFINED ENV{IPOPT_SOURCE_DIR})
       message(STATUS "using GLOBAL installation of IPOPT")
-      set(IPOPT_BUILD_DIR $ENV{IPOPT_SOURCE_DIR}/build)
+#       set(IPOPT_BUILD_DIR $ENV{IPOPT_SOURCE_DIR}/build)
     else()
       message(FATAL_ERROR "ERROR: Ipopt source directory environment variable not set! Set IPOPT_SOURCE_DIR environment variable!")
-    endif(ipopt_FOUND)
+    endif()
 
-    include_directories("${IPOPT_BUILD_DIR}/include/coin")
-    add_definitions( -DBUILD_WITH_IPOPT_SUPPORT )
-    link_directories(${IPOPT_BUILD_DIR}/lib)
-    set(IPOPT_LIBS ipopt dl coinmumps coinhsl lapack blas gfortran
-        m quadmath coinmetis)
+    message("********${IPOPT_INCLUDE_DIRS}")
+    include_directories(${IPOPT_INCLUDE_DIRS})
+    add_definitions( -DBUILD_WITH_IPOPT_SUPPORT -DHAVE_CSTDDEF )
+#     link_directories(${IPOPT_BUILD_DIR}/lib)
+    set(IPOPT_LIBS ipopt dl) # coinmumps coinhsl lapack blas gfortran m quadmath coinmetis)
 
-endif(DEFINED ENV{IPOPT_SOURCE_DIR} OR ipopt_FOUND)
+endif()
 
 
 ## include SNOPT

@@ -36,6 +36,8 @@ catkin_package(
     ct_core
     ct_optcon
     kindr
+  CFG_EXTRAS 
+    ct_rbd-extras.cmake
 )
 
 include_directories(
@@ -133,3 +135,11 @@ if(DOXYGEN_FOUND)
 endif()
 
 ct_configure_clang_tidy(INC_DIRS)
+
+
+# Mark cpp header files for installation
+install(DIRECTORY include/
+    DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}
+#     FILES_MATCHING PATTERN "*.h"
+#     PATTERN ".svn" EXCLUDE
+)

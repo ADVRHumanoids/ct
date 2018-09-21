@@ -77,6 +77,8 @@ catkin_package(
        ${PRESPEC_LIB_NAMES}
    DEPENDS
        EIGEN3
+   CFG_EXTRAS 
+       ct_core-extras.cmake
 )
 
 
@@ -192,3 +194,26 @@ if(DOXYGEN_FOUND)
 endif()
 
 ct_configure_clang_tidy(INC_DIRS)
+
+install(TARGETS ct_core ct_core
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+# Mark cpp header files for installation
+install(DIRECTORY include/
+    DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}
+#     FILES_MATCHING PATTERN "*.h"
+#     PATTERN ".svn" EXCLUDE
+)
+
+install(DIRECTORY examples/
+    DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}/ct/examples
+#     FILES_MATCHING PATTERN "*.h"
+#     PATTERN ".svn" EXCLUDE
+)
+
+
+
+
