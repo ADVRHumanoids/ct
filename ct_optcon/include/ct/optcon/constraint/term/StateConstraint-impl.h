@@ -96,7 +96,7 @@ StateConstraint<STATE_DIM, CONTROL_DIM, SCALAR>::jacobianStateSparse(const state
     const SCALAR t)
 {
     VectorXs jac(this->constrSize_);
-    jac.setConstant(1.0);
+    jac.setConstant(SCALAR(1.0));
     return jac;
 }
 

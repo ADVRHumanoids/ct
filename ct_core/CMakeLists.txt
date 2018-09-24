@@ -201,6 +201,14 @@ install(TARGETS ct_core ct_core
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
+foreach(prespec_lib ${PRESPEC_LIB_NAMES})
+    install(TARGETS ${prespec_lib} ${prespec_lib}
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+    )
+endforeach()
+
 # Mark cpp header files for installation
 install(DIRECTORY include/
     DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}

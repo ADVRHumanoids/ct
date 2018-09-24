@@ -96,8 +96,11 @@ catkin_package(
         ${HPIPM_LIBRARY}
         ${BLASFEO_LIBRARY}
         ${PRESPEC_LIB_NAMES}
+        ${IPOPT_LIBS}
    CATKIN_DEPENDS
         ct_core
+   CFG_EXTRAS
+        ${PROJECT_NAME}-extras.cmake
 )
 
 ## build SNOPT library
@@ -278,11 +281,28 @@ if(DOXYGEN_FOUND)
 endif()
 
 
-ct_configure_clang_tidy(INC_DIRS)
+# ct_configure_clang_tidy(INC_DIRS)
+
+
+foreach(prespec_lib ${PRESPEC_LIB_NAMES})
+    install(TARGETS ${prespec_lib} ${prespec_lib}
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+    )
+endforeach()
+
+
 
 # Mark cpp header files for installation
 install(DIRECTORY include/
     DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}
+#     FILES_MATCHING PATTERN "*.h"
+#     PATTERN ".svn" EXCLUDE
+)
+
+install(DIRECTORY examples/
+    DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}/ct/examples
 #     FILES_MATCHING PATTERN "*.h"
 #     PATTERN ".svn" EXCLUDE
 )
